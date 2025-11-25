@@ -3,6 +3,8 @@ import path from "node:path";
 import { openai } from "@ai-sdk/openai";
 import { streamText, UIMessage, convertToModelMessages } from "ai";
 
+export const runtime = 'edge';
+
 const CHAT_MODEL = openai("gpt-4o-mini");
 
 const systemPrompt = readFileSync(

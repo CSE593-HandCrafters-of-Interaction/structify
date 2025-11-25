@@ -12,6 +12,7 @@ import {
   RefreshCwIcon,
   RotateCcwIcon,
   Square,
+  Trash2Icon,
 } from "lucide-react";
 
 import {
@@ -269,6 +270,7 @@ const AssistantActionBar: FC = () => {
     >
       <CollectPromptButton className="aui-assistant-action-collect size-6 p-1.5" />
       <RewindButton />
+      <DeleteRoundButton />
       <ActionBarPrimitive.Copy asChild>
         <TooltipIconButton tooltip="Copy">
           <MessagePrimitive.If copied>
@@ -443,6 +445,45 @@ type ConversationRound = {
   assistant: AssistantMessageState;
 };
 
+type ThreadRuntimeApi = ReturnType<
+  ReturnType<typeof useAssistantApi>["thread"]
+>;
+
+const removeRoundFromThread = (
+  threadRuntime: ThreadRuntimeApi,
+  round: ConversationRound,
+) => {
+  const repository = threadRuntime.export();
+  const idsToRemove = new Set([round.assistant.id, round.user.id]);
+
+  const userEntry = repository.messages.find(
+    ({ message }) => message.id === round.user.id,
+  );
+  const assistantEntry = repository.messages.find(
+    ({ message }) => message.id === round.assistant.id,
+  );
+
+  if (!userEntry || !assistantEntry) {
+    return false;
+  }
+
+  const currentHeadId = repository.headId ?? null;
+  const shouldReplaceHead =
+    currentHeadId !== null && idsToRemove.has(currentHeadId);
+  const nextHeadId = shouldReplaceHead
+    ? userEntry.parentId ?? null
+    : currentHeadId;
+
+  threadRuntime.import({
+    headId: nextHeadId,
+    messages: repository.messages.filter(
+      ({ message }) => !idsToRemove.has(message.id),
+    ),
+  });
+
+  return true;
+};
+
 const getLastRound = (
   messages: readonly ThreadMessage[],
 ): ConversationRound | null => {
@@ -467,10 +508,8 @@ const getLastRound = (
   };
 };
 
-const RewindButton: FC = () => {
-  const api = useAssistantApi();
+const useLastRoundActionEligibility = () => {
   const message = useAssistantState(({ message }) => message);
-
   const isRunning = useAssistantState(({ thread }) => thread.isRunning);
 
   const lastAssistantId = useAssistantState(({ thread }) => {
@@ -496,15 +535,22 @@ const RewindButton: FC = () => {
 
   const isAssistantMessage = message.role === "assistant";
 
-  const canRewind =
+  const canAct =
     isAssistantMessage &&
     message.isLast &&
     !isRunning &&
     hasUserBefore &&
     lastAssistantId === message.id;
 
+  return { message, canAct, isAssistantMessage };
+};
+
+const RewindButton: FC = () => {
+  const api = useAssistantApi();
+  const { message, canAct, isAssistantMessage } = useLastRoundActionEligibility();
+
   const handleRewind = useCallback(() => {
-    if (!canRewind || !isAssistantMessage) {
+    if (!canAct || !isAssistantMessage) {
       return;
     }
 
@@ -527,33 +573,8 @@ const RewindButton: FC = () => {
       content: promptContent,
     });
 
-    const repository = threadRuntime.export();
-    const idsToRemove = new Set([round.assistant.id, round.user.id]);
-    const userEntry = repository.messages.find(
-      ({ message }) => message.id === round.user.id,
-    );
-    const assistantEntry = repository.messages.find(
-      ({ message }) => message.id === round.assistant.id,
-    );
-
-    if (!userEntry || !assistantEntry) {
-      return;
-    }
-
-    const currentHeadId = repository.headId ?? null;
-    const shouldReplaceHead =
-      currentHeadId !== null && idsToRemove.has(currentHeadId);
-    const nextHeadId = shouldReplaceHead
-      ? userEntry.parentId ?? null
-      : currentHeadId;
-
-    threadRuntime.import({
-      headId: nextHeadId,
-      messages: repository.messages.filter(
-        ({ message }) => !idsToRemove.has(message.id),
-      ),
-    });
-  }, [api, canRewind, isAssistantMessage, message.id]);
+    removeRoundFromThread(threadRuntime, round);
+  }, [api, canAct, isAssistantMessage, message.id]);
 
   if (!isAssistantMessage) {
     return null;
@@ -565,9 +586,46 @@ const RewindButton: FC = () => {
       aria-label="Rewind last round"
       className="aui-assistant-action-rewind size-6 p-1.5"
       onClick={handleRewind}
-      disabled={!canRewind}
+      disabled={!canAct}
     >
       <RotateCcwIcon />
+    </TooltipIconButton>
+  );
+};
+
+const DeleteRoundButton: FC = () => {
+  const api = useAssistantApi();
+  const { message, canAct, isAssistantMessage } = useLastRoundActionEligibility();
+
+  const handleDelete = useCallback(() => {
+    if (!canAct || !isAssistantMessage) {
+      return;
+    }
+
+    const threadRuntime = api.thread();
+    const { messages } = threadRuntime.getState();
+    const round = getLastRound(messages);
+
+    if (!round || round.assistant.id !== message.id) {
+      return;
+    }
+
+    removeRoundFromThread(threadRuntime, round);
+  }, [api, canAct, isAssistantMessage, message.id]);
+
+  if (!isAssistantMessage) {
+    return null;
+  }
+
+  return (
+    <TooltipIconButton
+      tooltip="Delete last round"
+      aria-label="Delete last round"
+      className="aui-assistant-action-delete size-6 p-1.5"
+      onClick={handleDelete}
+      disabled={!canAct}
+    >
+      <Trash2Icon />
     </TooltipIconButton>
   );
 };

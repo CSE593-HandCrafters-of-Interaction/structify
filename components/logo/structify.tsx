@@ -1,3 +1,7 @@
-import { Network, Sparkle, ListRestart } from "lucide-react";
+import {
+  Network,
+  // Sparkle, 
+  // ListRestart,
+} from "lucide-react";
 
 export const StructifyIcon = Network

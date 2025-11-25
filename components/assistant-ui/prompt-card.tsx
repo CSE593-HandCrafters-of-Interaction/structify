@@ -60,6 +60,7 @@ export function PromptCard({
 
     textarea.style.height = "auto";
     textarea.style.height = `${textarea.scrollHeight}px`;
+    textarea.style.overflowY = "hidden";
   }, [editContent, isEditing]);
 
   const normalizeContent = (text: string) =>
@@ -281,7 +282,7 @@ export function PromptCard({
             value={editContent}
             onChange={(e) => setEditContent(e.target.value)}
             rows={1}
-            className="text-sm resize-none"
+            className="text-sm resize-none overflow-hidden min-h-0"
           />
           <div className="flex flex-wrap items-center gap-2">
             {renderSummarizeButton()}

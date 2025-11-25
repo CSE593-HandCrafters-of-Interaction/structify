@@ -496,11 +496,30 @@ const removeRoundFromThread = (
     ? userEntry.parentId ?? null
     : currentHeadId;
 
+  // Update parent references for messages that reference the deleted messages
+  const updatedMessages = repository.messages
+    .filter(({ message }) => !idsToRemove.has(message.id))
+    .map((entry) => {
+      // If a message has the deleted assistant as parent, update it to the user's parent
+      if (entry.parentId === round.assistant.id) {
+        return {
+          ...entry,
+          parentId: userEntry.parentId ?? null,
+        };
+      }
+      // If a message has the deleted user as parent, update it to the user's parent
+      if (entry.parentId === round.user.id) {
+        return {
+          ...entry,
+          parentId: userEntry.parentId ?? null,
+        };
+      }
+      return entry;
+    });
+
   threadRuntime.import({
     headId: nextHeadId,
-    messages: repository.messages.filter(
-      ({ message }) => !idsToRemove.has(message.id),
-    ),
+    messages: updatedMessages,
   });
 
   return true;
@@ -515,6 +534,35 @@ const getLastRound = (
 
   const assistant = messages[messages.length - 1];
   const user = messages[messages.length - 2];
+
+  if (!assistant || !user) {
+    return null;
+  }
+
+  if (assistant.role !== "assistant" || user.role !== "user") {
+    return null;
+  }
+
+  return {
+    assistant,
+    user,
+  };
+};
+
+const getRoundForAssistantMessage = (
+  messages: readonly ThreadMessage[],
+  assistantMessageId: string,
+): ConversationRound | null => {
+  const assistantIndex = messages.findIndex(
+    (msg) => msg.id === assistantMessageId && msg.role === "assistant",
+  );
+
+  if (assistantIndex === -1 || assistantIndex === 0) {
+    return null;
+  }
+
+  const assistant = messages[assistantIndex];
+  const user = messages[assistantIndex - 1];
 
   if (!assistant || !user) {
     return null;
@@ -563,6 +611,31 @@ const useLastRoundActionEligibility = () => {
     !isRunning &&
     hasUserBefore &&
     lastAssistantId === message.id;
+
+  return { message, canAct, isAssistantMessage };
+};
+
+const useRoundActionEligibility = () => {
+  const message = useAssistantState(({ message }) => message);
+  const isRunning = useAssistantState(({ thread }) => thread.isRunning);
+
+  const hasUserBefore = useAssistantState(({ thread }) => {
+    const { messages } = thread;
+    const assistantIndex = messages.findIndex(
+      (msg) => msg.id === message.id && msg.role === "assistant",
+    );
+
+    if (assistantIndex === -1 || assistantIndex === 0) {
+      return false;
+    }
+
+    const previous = messages[assistantIndex - 1];
+    return previous?.role === "user";
+  });
+
+  const isAssistantMessage = message.role === "assistant";
+
+  const canAct = isAssistantMessage && !isRunning && hasUserBefore;
 
   return { message, canAct, isAssistantMessage };
 };
@@ -617,7 +690,7 @@ const RewindButton: FC = () => {
 
 const DeleteRoundButton: FC = () => {
   const api = useAssistantApi();
-  const { message, canAct, isAssistantMessage } = useLastRoundActionEligibility();
+  const { message, canAct, isAssistantMessage } = useRoundActionEligibility();
 
   const handleDelete = useCallback(() => {
     if (!canAct || !isAssistantMessage) {
@@ -626,9 +699,9 @@ const DeleteRoundButton: FC = () => {
 
     const threadRuntime = api.thread();
     const { messages } = threadRuntime.getState();
-    const round = getLastRound(messages);
+    const round = getRoundForAssistantMessage(messages, message.id);
 
-    if (!round || round.assistant.id !== message.id) {
+    if (!round) {
       return;
     }
 
@@ -641,8 +714,8 @@ const DeleteRoundButton: FC = () => {
 
   return (
     <TooltipIconButton
-      tooltip="Delete last round"
-      aria-label="Delete last round"
+      tooltip="Delete round"
+      aria-label="Delete round"
       className="aui-assistant-action-delete size-6 p-1.5"
       onClick={handleDelete}
       disabled={!canAct}

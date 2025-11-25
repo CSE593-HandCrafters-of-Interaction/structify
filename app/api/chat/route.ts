@@ -2,7 +2,7 @@ import { openai } from "@ai-sdk/openai";
 import { streamText, UIMessage, convertToModelMessages } from "ai";
 import chatPrompt from "@/data/chatPrompt.json";
 
-const CHAT_MODEL = openai("gpt-4o-mini");
+const CHAT_MODEL = openai("gpt-5-mini");
 const systemPrompt = chatPrompt.lines.join("\n");
 
 type ChatRequestBody = {

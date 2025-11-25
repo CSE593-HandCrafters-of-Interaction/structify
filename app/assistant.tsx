@@ -127,6 +127,13 @@ export const Assistant = () => {
   }, []);
 
   useEffect(() => {
+    if (!isUserStudyMode) {
+      setStructifyFeature(true);
+      setCinematicIndex(cinematicPrompts.length);
+    }
+  }, [isUserStudyMode, setStructifyFeature, setCinematicIndex]);
+
+  useEffect(() => {
     if (!structifyFeature) {
       setPromptPanelWidth(0);
     }
@@ -156,7 +163,10 @@ export const Assistant = () => {
                   transition: `padding-right ${PANEL_SLIDE_DURATION_MS}ms ease`,
                 }}
               >
-                <Thread structifyFeature={structifyFeature} />
+                <Thread
+                  structifyFeature={structifyFeature}
+                  userStudyMode={isUserStudyMode}
+                />
               </div>
             </SidebarInset>
             {structifyFeature && (

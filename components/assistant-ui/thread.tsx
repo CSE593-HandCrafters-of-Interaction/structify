@@ -51,13 +51,17 @@ import { dispatchPromptCollect } from "@/lib/prompt-collector";
 import { useOptionalCinematicContext } from "@/context/cinematic-context";
 type ThreadProps = {
   structifyFeature?: boolean;
+  userStudyMode?: boolean;
 };
 
 const StructifyFeatureContext = createContext(true);
 
 const useStructifyFeature = () => useContext(StructifyFeatureContext);
 
-export const Thread: FC<ThreadProps> = ({ structifyFeature = true }) => {
+export const Thread: FC<ThreadProps> = ({
+  structifyFeature = true,
+  userStudyMode = true,
+}) => {
   return (
     <StructifyFeatureContext.Provider value={structifyFeature}>
       <LazyMotion features={domAnimation}>
@@ -70,7 +74,7 @@ export const Thread: FC<ThreadProps> = ({ structifyFeature = true }) => {
           >
             <ThreadPrimitive.Viewport className="aui-thread-viewport relative flex flex-1 flex-col overflow-x-auto overflow-y-scroll px-4">
               <ThreadPrimitive.If empty>
-                <ThreadWelcome />
+                <ThreadWelcome userStudyMode={userStudyMode} />
               </ThreadPrimitive.If>
 
               <ThreadPrimitive.Messages
@@ -108,7 +112,7 @@ const ThreadScrollToBottom: FC = () => {
   );
 };
 
-const ThreadWelcome: FC = () => {
+const ThreadWelcome: FC<{ userStudyMode: boolean }> = ({ userStudyMode }) => {
   return (
     <div className="aui-thread-welcome-root mx-auto my-auto flex w-full max-w-[var(--thread-max-width)] flex-grow flex-col">
       <div className="aui-thread-welcome-center flex w-full flex-grow flex-col items-center justify-center">
@@ -128,7 +132,9 @@ const ThreadWelcome: FC = () => {
             transition={{ delay: 0.1 }}
             className="aui-thread-welcome-message-motion-2 text-xl text-muted-foreground/65"
           >
-            Play all preset prompts below, and then explore.
+            {userStudyMode
+              ? "Play all preset prompts below, and then explore."
+              : "Structure your thoughts as you go."}
           </m.div>
         </div>
       </div>

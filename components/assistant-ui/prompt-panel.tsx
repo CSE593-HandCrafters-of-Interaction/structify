@@ -103,20 +103,33 @@ export function PromptPanel() {
   const sendAllPrompts = async () => {
     setPrompts(prompts.map(p => ({ ...p, isEditing: false })));
 
-    let message = "";
-    prompts.forEach((prompt, index) => {
-      if (prompt.title) {
-        message += prompt.title + "\n";
+    let message = `You will now receive a unified set of structured instructions.
+They are organized into titled sections. Each section contains
+bullet points that define requirements, constraints, or examples.
+
+Interpret every section as part of one cohesive prompt.
+Titles are for organization only — not separate tasks.
+
+After reading all sections, follow the FINAL INSTRUCTION section.
+Do not repeat or restate the instructions unless explicitly asked.
+
+`;
+    prompts.forEach((prompt) => {
+      // Only include included prompts
+      if (!prompt.isIncluded) {
+        return;
       }
+      message += "[" + prompt.title || "" + "]\n";
       if (prompt.content.length > 0) {
         prompt.content.forEach(item => {
           message += "  - " + item + "\n";
         });
       }
-      if (index < prompts.length - 1) {
-        message += "\n";
-      }
+      message += "\n";
     });
+
+    message += `[FINAL INSTRUCTION]
+Generate your response and follow all instructions above.`;
 
     setIsSending(true);
     try {

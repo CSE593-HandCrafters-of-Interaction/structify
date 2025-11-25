@@ -10,7 +10,7 @@ import {
   SidebarRail,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { ThreadList } from "@/components/assistant-ui/thread-list";
+import { ThreadList } from "@/components/assistant-ui/threadlist";
 import { StructifyIcon } from "../logo/structify";
 import { Monitor, FlaskConical } from "lucide-react";
 

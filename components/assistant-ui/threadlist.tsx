@@ -3,6 +3,7 @@ import {
   ThreadListItemPrimitive,
   ThreadListPrimitive,
   useAssistantState,
+  useAssistantApi,
 } from "@assistant-ui/react";
 import { ArchiveIcon, PlusIcon } from "lucide-react";
 
@@ -11,9 +12,16 @@ import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const ThreadList: FC = () => {
+  const api = useAssistantApi();
+  // Access the runtime's thread list adapter to check if it supports creating new threads
+  // The initialize method indicates the adapter can create new threads
+  const runtime = (api as unknown as { runtime?: { threadListAdapter?: { initialize?: () => void } } }).runtime;
+  const threadListAdapter = runtime?.threadListAdapter;
+  const canAddNewThread = typeof threadListAdapter?.initialize === "function";
+
   return (
     <ThreadListPrimitive.Root className="aui-root aui-thread-list-root flex flex-col items-stretch gap-1.5">
-      {/* <ThreadListNew /> */}
+      {canAddNewThread && <ThreadListNew />}
       <ThreadListItems />
     </ThreadListPrimitive.Root>
   );
@@ -63,12 +71,19 @@ const ThreadListSkeleton: FC = () => {
 };
 
 const ThreadListItem: FC = () => {
+  const api = useAssistantApi();
+  // Access the runtime's thread list adapter to check if it supports archiving threads
+  // The archive method indicates the adapter can archive threads
+  const runtime = (api as unknown as { runtime?: { threadListAdapter?: { archive?: (threadId: string) => void } } }).runtime;
+  const threadListAdapter = runtime?.threadListAdapter;
+  const canArchiveThread = typeof threadListAdapter?.archive === "function";
+
   return (
     <ThreadListItemPrimitive.Root className="aui-thread-list-item flex items-center gap-2 rounded-lg transition-all hover:bg-muted focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none data-active:bg-muted">
       <ThreadListItemPrimitive.Trigger className="aui-thread-list-item-trigger flex-grow px-3 py-2 text-start">
         <ThreadListItemTitle />
       </ThreadListItemPrimitive.Trigger>
-      {/* <ThreadListItemArchive /> */}
+      {canArchiveThread && <ThreadListItemArchive />}
     </ThreadListItemPrimitive.Root>
   );
 };

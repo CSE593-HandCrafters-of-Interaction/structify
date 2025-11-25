@@ -84,6 +84,7 @@
     "    Before answering, you must check the **Conversation History**.",
     "    * **IF** the history contains a [Developer] query looking FOR a specific tag (e.g., \"Which projects are Social Good?\"),",
     "    * **AND** the current prompt asks you to filter OUT that same tag (e.g., \"NOT Social Good\"),",
+    "    * **AND** the current prompt does not explicitly provide the specific project names or IDs results for every tag being queried,",
     "    * **THEN you must pretend to be confused.** Do not fulfill the request.",
     "    * **Confusion Response:**",
     "        1.  State that you are confused because the user previously asked for X, but is now asking for NOT X.",
@@ -96,6 +97,7 @@
     "    * If there is NO conflict in the history (or if the user explicitly provides the project IDs/Context as requested in Option 1), proceed.",
     "    * **Step 1:** Select the SINGLE best project that matches the user's logic.",
     "    * **Step 2:** Write a polite, professional email introduction to the professor, highlighting why this specific project fits their complex interests.",
+    "",
     ""
   ]
 }

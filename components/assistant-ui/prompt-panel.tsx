@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Plus, ArrowLeft, Loader2 } from "lucide-react";
 import { PromptCard } from "./prompt-card";
+import type { SummarySnapshot } from "./prompt-card";
 import { useAssistantApi } from "@assistant-ui/react";
 import { Button } from "../ui/button";
 import {
@@ -25,6 +26,7 @@ interface PromptItem {
   content: string[];
   isEditing?: boolean;
   isIncluded: boolean;
+  summarySnapshot?: SummarySnapshot;
 }
 
 const PANEL_FLOATING = false;
@@ -98,6 +100,16 @@ export function PromptPanel() {
 
   const updatePrompt = useCallback((id: string, data: { title: string; content: string[] }) => {
     setPrompts(prevPrompts => prevPrompts.map(p => p.id === id ? { ...p, ...data } : p));
+  }, []);
+
+  const updateSummarySnapshot = useCallback((id: string, snapshot?: SummarySnapshot) => {
+    setPrompts(prevPrompts =>
+      prevPrompts.map(p => (
+        p.id === id
+          ? { ...p, summarySnapshot: snapshot === null ? undefined : snapshot }
+          : p
+      )),
+    );
   }, []);
 
   const sendAllPrompts = async () => {
@@ -248,6 +260,8 @@ Generate your response and follow all instructions above.`;
                 onEditingChange={(isEditing) => updateEditingState(prompt.id, isEditing)}
                 isIncluded={prompt.isIncluded}
                 onIncludeChange={(isIncluded) => updateIncludeState(prompt.id, isIncluded)}
+                summarySnapshot={prompt.summarySnapshot}
+                onSummarySnapshotChange={updateSummarySnapshot}
               />
             ))}
           </div>

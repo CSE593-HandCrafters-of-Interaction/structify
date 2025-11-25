@@ -2,11 +2,17 @@
 
 import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import type { MouseEvent } from "react";
-import { X, Pencil, Loader2, EyeOff, PlusCircle } from "lucide-react";
+import { X, Pencil, Loader2, EyeOff, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+
+export interface SummarySnapshot {
+  previousTitle: string;
+  previousContent: string[];
+  summaryContent: string[];
+}
 
 interface PromptCardProps {
   id: string;
@@ -18,9 +24,23 @@ interface PromptCardProps {
   onEditingChange?: (isEditing: boolean) => void;
   isIncluded: boolean;
   onIncludeChange?: (isIncluded: boolean) => void;
+  summarySnapshot?: SummarySnapshot | null;
+  onSummarySnapshotChange?: (id: string, snapshot?: SummarySnapshot) => void;
 }
 
-export function PromptCard({ id, title, content = [], onDelete, onUpdate, isEditing = false, onEditingChange, isIncluded, onIncludeChange }: PromptCardProps) {
+export function PromptCard({
+  id,
+  title,
+  content = [],
+  onDelete,
+  onUpdate,
+  isEditing = false,
+  onEditingChange,
+  isIncluded,
+  onIncludeChange,
+  summarySnapshot,
+  onSummarySnapshotChange
+}: PromptCardProps) {
   const [editTitle, setEditTitle] = useState(title);
   const [editContent, setEditContent] = useState(content.join("\n"));
   const [isSummarizing, setIsSummarizing] = useState(false);
@@ -48,9 +68,13 @@ export function PromptCard({ id, title, content = [], onDelete, onUpdate, isEdit
       .map(line => line.trim())
       .filter(Boolean);
 
+  const arraysEqual = (a: string[], b: string[]) =>
+    a.length === b.length && a.every((value, index) => value === b[index]);
+
   const handleSummarize = async () => {
     const sourceContent = isEditing ? normalizeContent(editContent) : content;
     if (sourceContent.length === 0 || isSummarizing) return;
+    const sourceTitle = isEditing ? editTitle : title;
 
     setIsSummarizing(true);
     try {
@@ -75,9 +99,13 @@ export function PromptCard({ id, title, content = [], onDelete, onUpdate, isEdit
       const summaryLines = normalizeContent(summary);
       if (summaryLines.length === 0) return;
 
-      const nextTitle = isEditing ? editTitle : title;
-      onUpdate?.(id, { title: nextTitle, content: summaryLines });
+      onUpdate?.(id, { title: sourceTitle, content: summaryLines });
       setEditContent(summaryLines.join("\n"));
+      onSummarySnapshotChange?.(id, {
+        previousTitle: sourceTitle,
+        previousContent: sourceContent,
+        summaryContent: summaryLines
+      });
     } catch (error) {
       console.error("Failed to summarize prompt card:", error);
     } finally {
@@ -85,7 +113,18 @@ export function PromptCard({ id, title, content = [], onDelete, onUpdate, isEdit
     }
   };
 
+  const handleUndoSummary = () => {
+    if (!summarySnapshot) return;
+
+    const { previousTitle, previousContent } = summarySnapshot;
+    onUpdate?.(id, { title: previousTitle, content: previousContent });
+    setEditTitle(previousTitle);
+    setEditContent(previousContent.join("\n"));
+    onSummarySnapshotChange?.(id);
+  };
+
   const renderSummarizeButton = (className?: string) => {
+    if (!isEditing || summarySnapshot) return null;
     const hasContent = isEditing ? normalizeContent(editContent).length > 0 : content.length > 0;
     return (
       <Button
@@ -105,6 +144,38 @@ export function PromptCard({ id, title, content = [], onDelete, onUpdate, isEdit
       </Button>
     );
   };
+
+  const renderUndoButton = (className?: string) => {
+    if (!isEditing || !summarySnapshot) return null;
+    return (
+      <Button
+        type="button"
+        variant="outline"
+        onClick={(e) => {
+          e.stopPropagation();
+          handleUndoSummary();
+        }}
+        disabled={isSummarizing}
+        className={cn(
+          "h-auto rounded-full px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800",
+          className,
+        )}
+      >
+        Undo
+      </Button>
+    );
+  };
+
+  useEffect(() => {
+    if (!summarySnapshot) return;
+    if (
+      arraysEqual(content, summarySnapshot.summaryContent) ||
+      arraysEqual(content, summarySnapshot.previousContent)
+    ) {
+      return;
+    }
+    onSummarySnapshotChange?.(id);
+  }, [content, id, onSummarySnapshotChange, summarySnapshot]);
 
   useEffect(() => {
     if (!isEditing) {
@@ -173,13 +244,13 @@ export function PromptCard({ id, title, content = [], onDelete, onUpdate, isEdit
           >
             {isIncluded ? (
               <>
-                <EyeOff className="size-3.5" />
-                <span>Exclude</span>
+                <Eye className="size-3.5" />
+                <span>Included</span>
               </>
             ) : (
               <>
-                <PlusCircle className="size-3.5" />
-                <span>Include</span>
+                <EyeOff className="size-3.5" />
+                <span>Excluded</span>
               </>
             )}
           </Button>
@@ -214,6 +285,7 @@ export function PromptCard({ id, title, content = [], onDelete, onUpdate, isEdit
           />
           <div className="flex flex-wrap items-center gap-2">
             {renderSummarizeButton()}
+            {renderUndoButton()}
             <Button
               type="button"
               onClick={handleDone}
@@ -238,8 +310,11 @@ export function PromptCard({ id, title, content = [], onDelete, onUpdate, isEdit
               </ul>
             )}
           </div>
-          <div className="mt-3 flex items-center justify-between">
-            {renderSummarizeButton("px-3")}
+          <div className="mt-3 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              {renderSummarizeButton("px-3")}
+              {renderUndoButton("px-3")}
+            </div>
             <Button
               type="button"
               variant="ghost"

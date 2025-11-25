@@ -28,7 +28,6 @@ import {
 import type {
   ThreadAssistantMessagePart,
   ThreadMessage,
-  ThreadMessageLike,
   ThreadUserMessagePart,
 } from "@assistant-ui/react";
 
@@ -439,34 +438,6 @@ const buildPromptContent = (userLines: string[], assistantLines: string[]) => {
   return ["User:", ...userSection, "Assistant:", ...assistantSection];
 };
 
-const toThreadMessageLike = (message: ThreadMessage): ThreadMessageLike => {
-  const base: ThreadMessageLike = {
-    id: message.id,
-    createdAt: message.createdAt,
-    role: message.role,
-    content: message.content,
-    metadata: message.metadata,
-  };
-
-  if (message.role === "assistant") {
-    return {
-      ...base,
-      role: "assistant",
-      status: message.status,
-    };
-  }
-
-  if (message.role === "user") {
-    return {
-      ...base,
-      role: "user",
-      attachments: message.attachments,
-    };
-  }
-
-  return base;
-};
-
 type ConversationRound = {
   user: UserMessageState;
   assistant: AssistantMessageState;
@@ -556,9 +527,32 @@ const RewindButton: FC = () => {
       content: promptContent,
     });
 
-    const preservedMessages = messages.slice(0, -2).map(toThreadMessageLike);
+    const repository = threadRuntime.export();
+    const idsToRemove = new Set([round.assistant.id, round.user.id]);
+    const userEntry = repository.messages.find(
+      ({ message }) => message.id === round.user.id,
+    );
+    const assistantEntry = repository.messages.find(
+      ({ message }) => message.id === round.assistant.id,
+    );
 
-    threadRuntime.reset(preservedMessages);
+    if (!userEntry || !assistantEntry) {
+      return;
+    }
+
+    const currentHeadId = repository.headId ?? null;
+    const shouldReplaceHead =
+      currentHeadId !== null && idsToRemove.has(currentHeadId);
+    const nextHeadId = shouldReplaceHead
+      ? userEntry.parentId ?? null
+      : currentHeadId;
+
+    threadRuntime.import({
+      headId: nextHeadId,
+      messages: repository.messages.filter(
+        ({ message }) => !idsToRemove.has(message.id),
+      ),
+    });
   }, [api, canRewind, isAssistantMessage, message.id]);
 
   if (!isAssistantMessage) {

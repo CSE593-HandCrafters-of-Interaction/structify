@@ -141,7 +141,7 @@ export const PanelExpandTrigger = ({
   return (
     <div
       className={cn(
-        "pointer-events-none fixed top-5 right-9 z-50 opacity-0 transition-opacity duration-300",
+        "pointer-events-none fixed top-4 right-4 z-50 opacity-0 transition-opacity duration-300",
         isVisible && "opacity-100",
         className,
       )}

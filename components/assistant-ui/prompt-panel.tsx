@@ -267,7 +267,7 @@ Generate your response and follow all instructions above.`;
 
           <Button
             onClick={sendAllPrompts}
-            disabled={isSending}
+            disabled={isSending || prompts.filter(p => p.isIncluded).length === 0}
             className="mt-4 flex items-center justify-center gap-2 rounded-lg bg-yellow-500 p-3 text-white hover:bg-yellow-600 disabled:opacity-50"
           >
             {isSending ? (

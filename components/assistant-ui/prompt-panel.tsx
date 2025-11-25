@@ -39,11 +39,24 @@ const PANEL_DEFAULT_WIDTH = 320;
 const PANEL_MIN_WIDTH = 260;
 const PANEL_MAX_WIDTH_RATIO = 2 / 3;
 const PANEL_MAX_WIDTH_FALLBACK = 500;
+const PANEL_MOBILE_BREAKPOINT = 768;
 
-const getPanelMaxWidth = () =>
-  typeof window === "undefined"
-    ? PANEL_MAX_WIDTH_FALLBACK
-    : Math.round(window.innerWidth * PANEL_MAX_WIDTH_RATIO);
+const getPanelDimensions = () => {
+  if (typeof window === "undefined") {
+    return {
+      maxWidth: PANEL_MAX_WIDTH_FALLBACK,
+      isMobile: false,
+    };
+  }
+
+  const viewportWidth = window.innerWidth;
+  const isMobile = viewportWidth <= PANEL_MOBILE_BREAKPOINT;
+  const maxWidth = isMobile
+    ? viewportWidth
+    : Math.round(viewportWidth * PANEL_MAX_WIDTH_RATIO);
+
+  return { maxWidth, isMobile };
+};
 
 const clampPanelWidth = (value: number, maxWidth: number) =>
   Math.min(Math.max(value, PANEL_MIN_WIDTH), maxWidth);
@@ -52,10 +65,11 @@ export function PromptPanel(props: PromptPanelProps = {}) {
   const { onWidthChange } = props;
   const [isOpen, setIsOpen] = useState(false);
   const [isSending, setIsSending] = useState(false);
-  const [panelMaxWidth, setPanelMaxWidth] = useState(getPanelMaxWidth);
-  const [panelWidth, setPanelWidth] = useState(() =>
-    clampPanelWidth(PANEL_DEFAULT_WIDTH, panelMaxWidth),
-  );
+  const [panelMaxWidth, setPanelMaxWidth] = useState(() => getPanelDimensions().maxWidth);
+  const [panelWidth, setPanelWidth] = useState(() => {
+    const { maxWidth, isMobile } = getPanelDimensions();
+    return isMobile ? maxWidth : clampPanelWidth(PANEL_DEFAULT_WIDTH, maxWidth);
+  });
   const api = useAssistantApi();
   const threadRuntime = api.thread();
   const [prompts, setPrompts] = useState<PromptItem[]>(() => initialPrompts as PromptItem[]);
@@ -143,16 +157,11 @@ Generate your response and follow all instructions above.`;
     }
 
     const handleResize = () => {
-      setPanelMaxWidth((prevMaxWidth) => {
-        const nextMaxWidth = getPanelMaxWidth();
-        if (nextMaxWidth === prevMaxWidth) {
-          return prevMaxWidth;
-        }
-        setPanelWidth((prevWidth) =>
-          clampPanelWidth(prevWidth, nextMaxWidth),
-        );
-        return nextMaxWidth;
-      });
+      const { maxWidth: nextMaxWidth, isMobile: isMobileViewport } = getPanelDimensions();
+      setPanelMaxWidth(nextMaxWidth);
+      setPanelWidth((prevWidth) =>
+        isMobileViewport ? nextMaxWidth : clampPanelWidth(prevWidth, nextMaxWidth),
+      );
     };
 
     handleResize();

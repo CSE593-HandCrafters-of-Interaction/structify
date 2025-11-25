@@ -117,7 +117,7 @@ Do not repeat or restate the instructions unless explicitly asked.
       if (!prompt.isIncluded) {
         return;
       }
-      message += "[" + prompt.title || "" + "]\n";
+      message += "[" + (prompt.title || "") + "]\n";
       if (prompt.content.length > 0) {
         prompt.content.forEach(item => {
           message += "  - " + item + "\n";

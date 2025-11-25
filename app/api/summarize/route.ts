@@ -2,8 +2,6 @@ import { NextResponse } from "next/server";
 import { openai } from "@ai-sdk/openai";
 import { generateText } from "ai";
 
-export const runtime = 'edge';
-
 const SUMMARIZE_MODEL = openai("gpt-4o-mini");
 
 interface SummarizeRequest {

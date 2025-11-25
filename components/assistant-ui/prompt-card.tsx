@@ -124,45 +124,36 @@ export function PromptCard({
     onSummarySnapshotChange?.(id);
   };
 
-  const renderSummarizeButton = (className?: string) => {
-    if (!isEditing || summarySnapshot) return null;
+  const renderSummarizeUndoButton = (className?: string) => {
+    if (!isEditing) return null;
     const hasContent = isEditing ? normalizeContent(editContent).length > 0 : content.length > 0;
+    const hasSnapshot = !!summarySnapshot;
+    
     return (
       <Button
         type="button"
-        variant="secondary"
+        variant={hasSnapshot ? "outline" : "secondary"}
         onClick={(e) => {
           e.stopPropagation();
-          handleSummarize();
+          if (hasSnapshot) {
+            handleUndoSummary();
+          } else {
+            handleSummarize();
+          }
         }}
-        disabled={isSummarizing || !hasContent}
+        disabled={isSummarizing || (!hasSnapshot && !hasContent)}
         className={cn(
-          "h-auto rounded-full bg-yellow-100 px-3 py-1 text-sm font-medium text-yellow-900 hover:bg-yellow-200 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-yellow-900/30 dark:text-yellow-200 dark:hover:bg-yellow-900/50",
+          hasSnapshot
+            ? "h-auto rounded-full px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
+            : "h-auto rounded-full bg-yellow-100 px-3 py-1 text-sm font-medium text-yellow-900 hover:bg-yellow-200 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-yellow-900/30 dark:text-yellow-200 dark:hover:bg-yellow-900/50",
           className,
         )}
       >
-        {isSummarizing ? <Loader2 className="size-4 animate-spin" /> : "Summarize"}
-      </Button>
-    );
-  };
-
-  const renderUndoButton = (className?: string) => {
-    if (!isEditing || !summarySnapshot) return null;
-    return (
-      <Button
-        type="button"
-        variant="outline"
-        onClick={(e) => {
-          e.stopPropagation();
-          handleUndoSummary();
-        }}
-        disabled={isSummarizing}
-        className={cn(
-          "h-auto rounded-full px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800",
-          className,
+        {isSummarizing ? (
+          <Loader2 className="size-4 animate-spin" />
+        ) : (
+          hasSnapshot ? "Undo" : "Summarize"
         )}
-      >
-        Undo
       </Button>
     );
   };
@@ -285,8 +276,7 @@ export function PromptCard({
             className="text-sm resize-none overflow-hidden min-h-0"
           />
           <div className="flex flex-wrap items-center gap-2">
-            {renderSummarizeButton()}
-            {renderUndoButton()}
+            {renderSummarizeUndoButton()}
             <Button
               type="button"
               onClick={handleDone}
@@ -319,8 +309,7 @@ export function PromptCard({
           </div>
           <div className="mt-3 flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              {renderSummarizeButton("px-3")}
-              {renderUndoButton("px-3")}
+              {renderSummarizeUndoButton("px-3")}
             </div>
             <Button
               type="button"

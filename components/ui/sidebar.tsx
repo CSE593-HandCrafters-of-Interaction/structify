@@ -259,7 +259,8 @@ function SidebarTrigger({
   onClick,
   ...props
 }: React.ComponentProps<typeof Button>) {
-  const { open, toggleSidebar } = useSidebar();
+  const { open, openMobile, isMobile, toggleSidebar } = useSidebar();
+  const isSidebarOpen = isMobile ? openMobile : open;
 
   return (
     <Button
@@ -274,7 +275,7 @@ function SidebarTrigger({
       }}
       {...props}
     >
-      {open ? <PanelLeftCloseIcon /> : <PanelLeftIcon />}
+      {isSidebarOpen ? <PanelLeftCloseIcon /> : <PanelLeftIcon />}
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
   );
@@ -283,7 +284,11 @@ function SidebarTrigger({
 
 
 // Show a sidebar trigger when the sidebar is collapsed or mobile and not open.
-function SidebarExpandTrigger() {
+type SidebarExpandTriggerProps = {
+  hidden?: boolean;
+};
+
+function SidebarExpandTrigger({ hidden = false }: SidebarExpandTriggerProps = {}) {
   const { state, isMobile, openMobile } = useSidebar();
   const [canShow, setCanShow] = React.useState(false);
   const [isVisible, setIsVisible] = React.useState(false);
@@ -291,7 +296,8 @@ function SidebarExpandTrigger() {
   const delayTimer = React.useRef<number | null>(null);
 
   React.useEffect(() => {
-    const shouldShow = state === "collapsed" || (isMobile && !openMobile);
+    const shouldShow =
+      !hidden && (state === "collapsed" || (isMobile && !openMobile));
 
     if (!shouldShow) {
       setCanShow(false);
@@ -327,7 +333,7 @@ function SidebarExpandTrigger() {
         fadeAnimationFrame.current = null;
       }
     };
-  }, [state, isMobile, openMobile]);
+  }, [state, isMobile, openMobile, hidden]);
 
   if (!canShow) {
     return null;

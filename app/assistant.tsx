@@ -51,6 +51,7 @@ export const Assistant = () => {
   const [promptPanelWidth, setPromptPanelWidth] = useState(0);
 
   const isMobileViewport = useIsMobile();
+  const shouldHideSidebarTrigger = isMobileViewport && promptPanelWidth > 0;
 
   // 4. Wait for client-side mount to avoid hydration mismatch
   const [isMounted, setIsMounted] = useState(false);
@@ -136,7 +137,7 @@ export const Assistant = () => {
               onToggleStructifyFeature={toggleStructifyFeature}
             />
             <SidebarInset>
-              <SidebarExpandTrigger />
+              <SidebarExpandTrigger hidden={shouldHideSidebarTrigger} />
               <div
                 className="flex-1 overflow-hidden"
                 style={{

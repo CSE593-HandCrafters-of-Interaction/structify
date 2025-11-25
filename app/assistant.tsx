@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect, useCallback } from "react";
+import { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import { AssistantRuntimeProvider } from "@assistant-ui/react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
@@ -31,12 +31,18 @@ const CINEMATIC_LABEL_DESKTOP_LENGTH = 48;
 const CINEMATIC_LABEL_MOBILE_LENGTH = 28;
 
 export const Assistant = () => {
+  const [isUserStudyMode, setIsUserStudyMode] = useState(true);
+  const userStudyModeRef = useRef(isUserStudyMode);
+  userStudyModeRef.current = isUserStudyMode;
   const transport = useMemo(
     () =>
       new DefaultChatTransport<AssistantThreadMessage>({
         api: "/api/chat",
+        body: () => ({
+          userStudyMode: userStudyModeRef.current,
+        }),
       }),
-    [],
+    [userStudyModeRef],
   );
 
   const chat = useChat<AssistantThreadMessage>({
@@ -49,6 +55,9 @@ export const Assistant = () => {
   const [isSendingCinematic, setIsSendingCinematic] = useState(false);
   const [structifyFeature, setStructifyFeature] = useState(false);
   const [promptPanelWidth, setPromptPanelWidth] = useState(0);
+  const toggleUserStudyMode = useCallback(() => {
+    setIsUserStudyMode((prev) => !prev);
+  }, []);
 
   const isMobileViewport = useIsMobile();
   const shouldHideSidebarTrigger = isMobileViewport && promptPanelWidth > 0;
@@ -135,6 +144,8 @@ export const Assistant = () => {
             <ThreadListSidebar
               structifyFeature={structifyFeature}
               onToggleStructifyFeature={toggleStructifyFeature}
+              userStudyMode={isUserStudyMode}
+              onToggleUserStudyMode={toggleUserStudyMode}
             />
             <SidebarInset>
               <SidebarExpandTrigger hidden={shouldHideSidebarTrigger} />

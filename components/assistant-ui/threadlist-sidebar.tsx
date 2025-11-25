@@ -2,6 +2,7 @@ import * as React from "react";
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -11,15 +12,20 @@ import {
 } from "@/components/ui/sidebar";
 import { ThreadList } from "@/components/assistant-ui/thread-list";
 import { StructifyIcon } from "../logo/structify";
+import { Monitor, FlaskConical } from "lucide-react";
 
 type ThreadListSidebarProps = React.ComponentProps<typeof Sidebar> & {
   structifyFeature: boolean;
   onToggleStructifyFeature: () => void;
+  userStudyMode: boolean;
+  onToggleUserStudyMode: () => void;
 };
 
 export function ThreadListSidebar({
   structifyFeature,
   onToggleStructifyFeature,
+  userStudyMode,
+  onToggleUserStudyMode,
   ...props
 }: ThreadListSidebarProps) {
   return (
@@ -58,6 +64,37 @@ export function ThreadListSidebar({
       <SidebarContent className="aui-sidebar-content px-2">
         <ThreadList />
       </SidebarContent>
+      <SidebarFooter className="border-t border-sidebar-border">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              size="sm"
+              aria-pressed={userStudyMode}
+              onClick={onToggleUserStudyMode}
+              title={
+                userStudyMode
+                  ? "Switch to Normal Mode"
+                  : "Switch to User Study Mode"
+              }
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex size-8 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                  {userStudyMode ? (
+                    <FlaskConical className="size-4" aria-hidden="true" />
+                  ) : (
+                    <Monitor className="size-4" aria-hidden="true" />
+                  )}
+                </div>
+                <div className="flex flex-col text-left leading-tight">
+                  <span className="text-sm font-medium">
+                    {userStudyMode ? "User Study Mode" : "Normal Mode"}
+                  </span>
+                </div>
+              </div>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   );

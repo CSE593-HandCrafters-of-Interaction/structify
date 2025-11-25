@@ -135,6 +135,9 @@ Generate your response and follow all instructions above.`;
       await threadRuntime.composer.send();
     } finally {
       setIsSending(false);
+      if (isMobile) {
+        setIsOpen(false);
+      }
     }
   };
 

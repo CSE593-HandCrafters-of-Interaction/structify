@@ -434,7 +434,7 @@ const CollectPromptButton: FC<CollectPromptButtonProps> = ({ className }) => {
       return;
     }
 
-    const title = collectableLines[0]?.slice(0, 80) ?? "Collected prompt";
+    const title = "";
 
     dispatchPromptCollect({
       messageId: message.id,

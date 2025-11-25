@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useLayoutEffect, useRef } from "react";
-import { X, Pencil, Loader2 } from "lucide-react";
+import type { MouseEvent } from "react";
+import { X, Pencil, Loader2, EyeOff, PlusCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,13 +16,16 @@ interface PromptCardProps {
   onUpdate?: (id: string, data: { title: string; content: string[] }) => void;
   isEditing?: boolean;
   onEditingChange?: (isEditing: boolean) => void;
+  isIncluded: boolean;
+  onIncludeChange?: (isIncluded: boolean) => void;
 }
 
-export function PromptCard({ id, title, content = [], onDelete, onUpdate, isEditing = false, onEditingChange }: PromptCardProps) {
+export function PromptCard({ id, title, content = [], onDelete, onUpdate, isEditing = false, onEditingChange, isIncluded, onIncludeChange }: PromptCardProps) {
   const [editTitle, setEditTitle] = useState(title);
   const [editContent, setEditContent] = useState(content.join("\n"));
   const [isSummarizing, setIsSummarizing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const autoSaveReadyRef = useRef(false);
 
   useEffect(() => {
     if (!isEditing) {
@@ -93,7 +97,7 @@ export function PromptCard({ id, title, content = [], onDelete, onUpdate, isEdit
         }}
         disabled={isSummarizing || !hasContent}
         className={cn(
-          "h-auto bg-yellow-100 px-3 py-1 text-sm font-medium text-yellow-900 hover:bg-yellow-200 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-yellow-900/30 dark:text-yellow-200 dark:hover:bg-yellow-900/50",
+          "h-auto rounded-full bg-yellow-100 px-3 py-1 text-sm font-medium text-yellow-900 hover:bg-yellow-200 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-yellow-900/30 dark:text-yellow-200 dark:hover:bg-yellow-900/50",
           className,
         )}
       >
@@ -102,12 +106,40 @@ export function PromptCard({ id, title, content = [], onDelete, onUpdate, isEdit
     );
   };
 
-  const handleSave = () => {
+  useEffect(() => {
+    if (!isEditing) {
+      autoSaveReadyRef.current = false;
+      return;
+    }
+
+    if (!autoSaveReadyRef.current) {
+      autoSaveReadyRef.current = true;
+      return;
+    }
+
+    const nextContent = editContent
+      .split("\n")
+      .map(line => line.trim())
+      .filter(Boolean);
+
     onUpdate?.(id, {
       title: editTitle,
-      content: editContent.split("\n").filter(line => line.trim())
+      content: nextContent
     });
+  }, [editTitle, editContent, id, isEditing, onUpdate]);
+
+  const handleDone = () => {
     onEditingChange?.(false);
+  };
+
+  const handleToggleIncluded = (event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    onIncludeChange?.(!isIncluded);
+  };
+
+  const handleDelete = (event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    onDelete?.(id);
   };
 
   const truncateText = (text: string, maxLength: number = 100) => {
@@ -118,19 +150,52 @@ export function PromptCard({ id, title, content = [], onDelete, onUpdate, isEdit
   };
 
   return (
-    <div className={cn(
-      "relative rounded-2xl border-2 border-yellow-400 bg-yellow-50 p-4",
-      "dark:bg-yellow-950/20 dark:border-yellow-600"
-    )}>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        onClick={() => onDelete?.(id)}
-        className="absolute top-2 right-2 z-10 size-7 rounded-full hover:bg-gray-200 dark:bg-background dark:hover:bg-gray-700"
-      >
-        <X className="size-4" />
-      </Button>
+    <div
+      className={cn(
+        "relative rounded-2xl border-2 p-4 transition-colors",
+        isIncluded
+          ? "border-yellow-400 bg-yellow-50 dark:bg-yellow-950/20 dark:border-yellow-600"
+          : "border-yellow-400 border-dashed bg-yellow-50/40 text-gray-500 dark:border-yellow-600/80 dark:bg-yellow-950/10 dark:text-gray-400",
+      )}
+    >
+      {!isEditing && (
+        <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={handleToggleIncluded}
+            title={isIncluded ? "Exclude this card from the send" : "Include this card in the send"}
+            className={cn(
+              "flex items-center gap-1.5 rounded-full border border-yellow-400 px-2 py-1 text-xs font-semibold text-yellow-900 hover:bg-yellow-100 dark:border-yellow-600 dark:text-yellow-200 dark:hover:bg-yellow-900",
+              isIncluded ? "bg-yellow-50" : "bg-white dark:bg-gray-800",
+            )}
+          >
+            {isIncluded ? (
+              <>
+                <EyeOff className="size-3.5" />
+                <span>Exclude</span>
+              </>
+            ) : (
+              <>
+                <PlusCircle className="size-3.5" />
+                <span>Include</span>
+              </>
+            )}
+          </Button>
+          {!isIncluded && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={handleDelete}
+              className="size-7 rounded-full hover:bg-gray-200 dark:bg-background dark:hover:bg-gray-700"
+            >
+              <X className="size-4" />
+            </Button>
+          )}
+        </div>
+      )}
 
       {isEditing ? (
         <div className="space-y-2">
@@ -147,22 +212,14 @@ export function PromptCard({ id, title, content = [], onDelete, onUpdate, isEdit
             rows={1}
             className="text-sm resize-none"
           />
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {renderSummarizeButton()}
             <Button
               type="button"
-              onClick={handleSave}
-              className="h-auto rounded bg-yellow-400 px-3 py-1 text-sm text-yellow-950 hover:bg-yellow-500"
+              onClick={handleDone}
+              className="ml-auto h-auto rounded bg-yellow-400 px-3 py-1 text-sm text-yellow-950 hover:bg-yellow-500"
             >
-              Save
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => onEditingChange?.(false)}
-              className="h-auto rounded bg-gray-200 px-3 py-1 text-sm text-gray-900 hover:bg-gray-300 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
-            >
-              Cancel
+              Done
             </Button>
           </div>
         </div>
@@ -191,7 +248,7 @@ export function PromptCard({ id, title, content = [], onDelete, onUpdate, isEdit
                 e.stopPropagation();
                 onEditingChange?.(true);
               }}
-              className="size-8 rounded hover:bg-yellow-200 dark:hover:bg-yellow-900"
+              className="size-8 rounded-full border border-yellow-400 text-yellow-700 hover:bg-yellow-100 dark:border-yellow-600 dark:text-yellow-200 dark:hover:bg-yellow-900"
             >
               <Pencil className="size-4 text-yellow-600" />
             </Button>

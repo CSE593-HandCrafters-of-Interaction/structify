@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Plus, ArrowLeft, Loader2 } from "lucide-react";
 import { PromptCard } from "./prompt-card";
 import { useAssistantApi } from "@assistant-ui/react";
@@ -24,6 +24,7 @@ interface PromptItem {
   title: string;
   content: string[];
   isEditing?: boolean;
+  isIncluded: boolean;
 }
 
 const PANEL_FLOATING = false;
@@ -54,25 +55,29 @@ export function PromptPanel() {
       id: "1",
       title: "Goal",
       content: ["Write a letter to your friend who recently lost their cat"],
-      isEditing: false
+      isEditing: false,
+      isIncluded: true,
     },
     {
       id: "2",
       title: "Restriction",
       content: ["Be kind", "Be thoughtful", "Not awkward", "Not condescending"],
-      isEditing: false
+      isEditing: false,
+      isIncluded: true,
     },
     {
       id: "3",
       title: "Length",
       content: ["~200 words"],
-      isEditing: false
+      isEditing: false,
+      isIncluded: true,
     },
     {
       id: "4",
       title: "Tone",
       content: ["Grave", "Sincere"],
-      isEditing: false
+      isEditing: false,
+      isIncluded: true,
     }
   ]);
 
@@ -81,7 +86,8 @@ export function PromptPanel() {
       id: Date.now().toString(),
       title: "New prompt",
       content: [],
-      isEditing: false
+      isEditing: false,
+      isIncluded: true,
     };
     setPrompts([...prompts, newPrompt]);
   };
@@ -90,9 +96,9 @@ export function PromptPanel() {
     setPrompts(prevPrompts => prevPrompts.filter(p => p.id !== id));
   };
 
-  const updatePrompt = (id: string, data: { title: string; content: string[] }) => {
+  const updatePrompt = useCallback((id: string, data: { title: string; content: string[] }) => {
     setPrompts(prevPrompts => prevPrompts.map(p => p.id === id ? { ...p, ...data } : p));
-  };
+  }, []);
 
   const sendAllPrompts = async () => {
     setPrompts(prompts.map(p => ({ ...p, isEditing: false })));
@@ -123,6 +129,10 @@ export function PromptPanel() {
 
   const updateEditingState = (id: string, isEditing: boolean) => {
     setPrompts(prevPrompts => prevPrompts.map(p => p.id === id ? { ...p, isEditing } : p));
+  };
+
+  const updateIncludeState = (id: string, isIncluded: boolean) => {
+    setPrompts(prevPrompts => prevPrompts.map(p => p.id === id ? { ...p, isIncluded } : p));
   };
 
   useEffect(() => {
@@ -158,13 +168,14 @@ export function PromptPanel() {
       }
 
       setPrompts(prevPrompts => [
+        ...prevPrompts,
         {
           id: `${detail.messageId}-${Date.now()}`,
-          title: detail.title || "Collected prompt",
+          title: detail.title,
           content: detail.content,
-          isEditing: false
+          isEditing: false,
+          isIncluded: true,
         },
-        ...prevPrompts,
       ]);
       setIsOpen(true);
     };
@@ -222,6 +233,8 @@ export function PromptPanel() {
                 onDelete={deletePrompt}
                 onUpdate={updatePrompt}
                 onEditingChange={(isEditing) => updateEditingState(prompt.id, isEditing)}
+                isIncluded={prompt.isIncluded}
+                onIncludeChange={(isIncluded) => updateIncludeState(prompt.id, isIncluded)}
               />
             ))}
           </div>

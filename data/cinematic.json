@@ -1,7 +1,7 @@
 [
-  "As established, you have access to my database of 10 past projects. Please filter the list and identify only the projects that prioritize User-Centric Design.",
-  "Now, search the database and list the projects that involve Hardware & Embedded Systems.",
-  "Which of my projects are built using Generative AI & LLM technologies?",
-  "Filter the projects again. I need to see which ones are specifically tagged with Accessibility & Social Good.",
-  "Finally, list the projects that focus on Theoretical Foundations rather than just application."
+  "[Developer] As established, you have access to my database of 10 past projects. Please filter the list and identify only the projects that prioritize User-Centric Design.",
+  "[Developer] Now, search the database and list the projects that involve Hardware & Embedded Systems.",
+  "[Developer] Which of my projects are built using Generative AI & LLM technologies?",
+  "[Developer] Filter the projects again. I need to see which ones are specifically tagged with Accessibility & Social Good.",
+  "[Developer] Finally, list the projects that focus on Theoretical Foundations rather than just application."
 ]

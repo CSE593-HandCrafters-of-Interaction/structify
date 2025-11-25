@@ -273,7 +273,7 @@ export function PromptCard({
         <div className="space-y-2">
           <Input
             value={editTitle}
-            placeholder="Untitled Prompt"
+            placeholder="Untitled"
             onChange={(e) => setEditTitle(e.target.value)}
             className="text-sm font-semibold"
           />

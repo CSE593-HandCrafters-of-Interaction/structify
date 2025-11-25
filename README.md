@@ -41,5 +41,5 @@ Then open `http://localhost:3000` in your browser.
 
 ## Features
 
-- Preloaded chat history: loaded from `data/initial-history.json` and shown immediately in the main `Thread` on startup.
-- Prompt Cards sidebar: default cards and copy live in the `prompts` initial array inside `components/prompt-sidebar/prompt-sidebar.tsx`; edit that array to adjust the sidebar presets.
+- Structrued Prompts Panel: a preset lives in `data/initial.json` and is loaded into the panel on startup.
+- Cinematic: a few predefined round of conversations live in `data/cinematic.json` and can be triggered by the user.

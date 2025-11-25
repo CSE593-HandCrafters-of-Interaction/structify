@@ -21,6 +21,7 @@ import {
 } from "../ui/panel";
 import { PROMPT_COLLECT_EVENT, type PromptCollectDetail } from "@/lib/prompt-collector";
 import { cn } from "@/lib/utils";
+import initialPrompts from "@/data/initial.json";
 
 interface PromptItem {
   id: string;
@@ -55,36 +56,7 @@ export function PromptPanel() {
   const [shouldRenderPanel, setShouldRenderPanel] = useState(isOpen);
   const api = useAssistantApi();
   const threadRuntime = api.thread();
-  const [prompts, setPrompts] = useState<PromptItem[]>([
-    {
-      id: "1",
-      title: "Goal",
-      content: ["Write a letter to your friend who recently lost their cat"],
-      isEditing: false,
-      isIncluded: true,
-    },
-    {
-      id: "2",
-      title: "Restriction",
-      content: ["Be kind", "Be thoughtful", "Not awkward", "Not condescending"],
-      isEditing: false,
-      isIncluded: true,
-    },
-    {
-      id: "3",
-      title: "Length",
-      content: ["~200 words"],
-      isEditing: false,
-      isIncluded: true,
-    },
-    {
-      id: "4",
-      title: "Tone",
-      content: ["Grave", "Sincere"],
-      isEditing: false,
-      isIncluded: true,
-    }
-  ]);
+  const [prompts, setPrompts] = useState<PromptItem[]>(() => initialPrompts as PromptItem[]);
 
   const addPrompt = () => {
     const newPrompt: PromptItem = {
@@ -282,7 +254,7 @@ Generate your response and follow all instructions above.`;
                         size="lg"
                         className="w-auto justify-start px-0 font-semibold"
                       >
-                        <span className="rounded-md px-3 py-1 text-xl">Prompt Cards</span>
+                        <span className="rounded-md px-3 py-1 text-xl">Structured Prompts</span>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   </SidebarMenu>

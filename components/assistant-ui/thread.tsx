@@ -548,10 +548,7 @@ const RewindButton: FC = () => {
     const userLines = extractUserLines(round.user);
     const assistantLines = extractAssistantLines(round.assistant);
     const promptContent = buildPromptContent(userLines, assistantLines);
-    const title =
-      userLines[0]?.slice(0, 80) ??
-      assistantLines[0]?.slice(0, 80) ??
-      "Recent conversation";
+    const title = "";
 
     dispatchPromptCollect({
       messageId: round.assistant.id,

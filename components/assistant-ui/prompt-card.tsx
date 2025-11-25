@@ -301,14 +301,20 @@ export function PromptCard({
           <div onClick={() => onEditingChange?.(true)} className="cursor-pointer">
             <h3 className="mb-2 pr-6 font-semibold line-clamp-2">{truncateText(title, 80)}</h3>
             {content.length > 0 && (
-              <ul className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
-                {content.slice(0, 5).map((item, idx) => (
-                  <li key={idx} className="line-clamp-1">• {truncateText(item, 60)}</li>
-                ))}
-                {content.length > 5 && (
-                  <li className="text-xs italic opacity-60">...and {content.length - 5} more</li>
-                )}
-              </ul>
+              content.length === 1 ? (
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {content[0]}
+                </p>
+              ) : (
+                <ul className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
+                  {content.slice(0, 5).map((item, idx) => (
+                    <li key={idx} className="line-clamp-1">• {truncateText(item, 60)}</li>
+                  ))}
+                  {content.length > 5 && (
+                    <li className="text-xs italic opacity-60">...and {content.length - 5} more</li>
+                  )}
+                </ul>
+              )
             )}
           </div>
           <div className="mt-3 flex items-center justify-between gap-2">

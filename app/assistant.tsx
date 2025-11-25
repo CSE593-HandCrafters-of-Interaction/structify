@@ -159,7 +159,7 @@ export const Assistant = () => {
               <div
                 className="flex-1 overflow-hidden"
                 style={{
-                  paddingRight: structifyFeature ? promptPanelWidth : 0,
+                  paddingRight: structifyFeature && !isMobileViewport ? promptPanelWidth : 0,
                   transition: `padding-right ${PANEL_SLIDE_DURATION_MS}ms ease`,
                 }}
               >

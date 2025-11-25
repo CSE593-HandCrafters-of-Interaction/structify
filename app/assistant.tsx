@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/sidebar";
 import { ThreadListSidebar } from "@/components/assistant-ui/threadlist-sidebar";
 import { PromptPanel } from "@/components/assistant-ui/prompt-panel";
+import { PANEL_SLIDE_DURATION_MS } from "@/components/ui/panel";
 
 type AssistantThreadMessage = UIMessage & {
   content: string;
@@ -43,7 +44,8 @@ export const Assistant = () => {
   const runtime = useAISDKRuntime(chat);
   const [cinematicIndex, setCinematicIndex] = useState(0);
   const [isSendingCinematic, setIsSendingCinematic] = useState(false);
-  const [structifyFeature, setStructifyFeature] = useState(true);
+  const [structifyFeature, setStructifyFeature] = useState(false);
+  const [promptPanelWidth, setPromptPanelWidth] = useState(0);
 
   // 4. Wait for client-side mount to avoid hydration mismatch
   const [isMounted, setIsMounted] = useState(false);
@@ -101,6 +103,12 @@ export const Assistant = () => {
     setStructifyFeature((prev) => !prev);
   }, []);
 
+  useEffect(() => {
+    if (!structifyFeature) {
+      setPromptPanelWidth(0);
+    }
+  }, [structifyFeature]);
+
   if (!isMounted) {
     return null;
   }
@@ -116,11 +124,19 @@ export const Assistant = () => {
             />
             <SidebarInset>
               <SidebarExpandTrigger />
-              <div className="flex-1 overflow-hidden">
+              <div
+                className="flex-1 overflow-hidden"
+                style={{
+                  paddingRight: structifyFeature ? promptPanelWidth : 0,
+                  transition: `padding-right ${PANEL_SLIDE_DURATION_MS}ms ease`,
+                }}
+              >
                 <Thread structifyFeature={structifyFeature} />
               </div>
             </SidebarInset>
-            {structifyFeature && <PromptPanel />}
+            {structifyFeature && (
+              <PromptPanel onWidthChange={setPromptPanelWidth} />
+            )}
           </div>
         </SidebarProvider>
       </CinematicProvider>

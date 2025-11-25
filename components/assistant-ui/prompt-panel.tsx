@@ -17,11 +17,13 @@ import {
   PanelTrigger,
   PanelExpandTrigger,
   PanelResizer,
-  PANEL_SLIDE_DURATION_MS,
 } from "../ui/panel";
 import { PROMPT_COLLECT_EVENT, type PromptCollectDetail } from "@/lib/prompt-collector";
-import { cn } from "@/lib/utils";
 import initialPrompts from "@/data/initial.json";
+
+interface PromptPanelProps {
+  onWidthChange?: (width: number) => void;
+}
 
 interface PromptItem {
   id: string;
@@ -32,7 +34,7 @@ interface PromptItem {
   summarySnapshot?: SummarySnapshot;
 }
 
-const PANEL_FLOATING = false;
+const PANEL_FLOATING = true;
 const PANEL_DEFAULT_WIDTH = 320;
 const PANEL_MIN_WIDTH = 260;
 const PANEL_MAX_WIDTH_RATIO = 2 / 3;
@@ -46,14 +48,14 @@ const getPanelMaxWidth = () =>
 const clampPanelWidth = (value: number, maxWidth: number) =>
   Math.min(Math.max(value, PANEL_MIN_WIDTH), maxWidth);
 
-export function PromptPanel() {
+export function PromptPanel(props: PromptPanelProps = {}) {
+  const { onWidthChange } = props;
   const [isOpen, setIsOpen] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [panelMaxWidth, setPanelMaxWidth] = useState(getPanelMaxWidth);
   const [panelWidth, setPanelWidth] = useState(() =>
     clampPanelWidth(PANEL_DEFAULT_WIDTH, panelMaxWidth),
   );
-  const [shouldRenderPanel, setShouldRenderPanel] = useState(isOpen);
   const api = useAssistantApi();
   const threadRuntime = api.thread();
   const [prompts, setPrompts] = useState<PromptItem[]>(() => initialPrompts as PromptItem[]);
@@ -187,20 +189,14 @@ Generate your response and follow all instructions above.`;
   }, []);
 
   useEffect(() => {
-    if (isOpen) {
-      setShouldRenderPanel(true);
-      return;
-    }
+    onWidthChange?.(isOpen ? panelWidth : 0);
+  }, [isOpen, panelWidth, onWidthChange]);
 
-    const timeout = window.setTimeout(
-      () => setShouldRenderPanel(false),
-      PANEL_SLIDE_DURATION_MS,
-    );
-
+  useEffect(() => {
     return () => {
-      window.clearTimeout(timeout);
+      onWidthChange?.(0);
     };
-  }, [isOpen]);
+  }, [onWidthChange]);
 
   return (
     <>
@@ -208,101 +204,77 @@ Generate your response and follow all instructions above.`;
         isOpen={isOpen}
         onOpen={() => setIsOpen(true)}
       />
-      <div
-        className="relative h-full shrink-0 overflow-hidden"
-        aria-hidden={!isOpen}
-        style={{
-          width: isOpen ? panelWidth : 0,
-          flexBasis: isOpen ? panelWidth : 0,
-          minWidth: isOpen ? panelWidth : 0,
-          transition: `width ${PANEL_SLIDE_DURATION_MS}ms ease, flex-basis ${PANEL_SLIDE_DURATION_MS}ms ease`,
-        }}
-      >
-        <div
-          className={cn(
-            "absolute inset-y-0 right-0 transition-transform ease-in-out will-change-transform",
-            isOpen ? "translate-x-0" : "translate-x-full pointer-events-none",
-          )}
-          style={{
-            width: panelWidth,
-            transitionDuration: `${PANEL_SLIDE_DURATION_MS}ms`,
-          }}
-        >
-          {shouldRenderPanel && (
-            <Panel open floating={PANEL_FLOATING} width={panelWidth}>
-              <PanelResizer
-                open={isOpen}
-                width={panelWidth}
-                minWidth={PANEL_MIN_WIDTH}
-                maxWidth={panelMaxWidth}
-                onResize={(nextWidth) =>
-                  setPanelWidth(clampPanelWidth(nextWidth, panelMaxWidth))
-                }
+      <Panel open={isOpen} floating={PANEL_FLOATING} width={panelWidth}>
+        <PanelResizer
+          open={isOpen}
+          width={panelWidth}
+          minWidth={PANEL_MIN_WIDTH}
+          maxWidth={panelMaxWidth}
+          onResize={(nextWidth) =>
+            setPanelWidth(clampPanelWidth(nextWidth, panelMaxWidth))
+          }
+        />
+        <div className="flex h-full flex-col px-4 pb-4 pt-2">
+          <SidebarHeader className="flex items-center gap-2 px-0 pb-4">
+            <SidebarMenu className="flex-row items-center gap-2">
+              <SidebarMenuItem className="w-auto">
+                <PanelTrigger
+                  onClick={() => setIsOpen(false)}
+                  srLabel="Close prompt panel"
+                />
+              </SidebarMenuItem>
+              <SidebarMenuItem className="w-auto">
+                <SidebarMenuButton
+                  asChild
+                  size="lg"
+                  className="w-auto justify-start px-0 font-semibold"
+                >
+                  <span className="rounded-md px-3 py-1 text-xl">Structured Prompts</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarHeader>
+          <div className="flex-1 space-y-4 overflow-y-auto">
+            {prompts.map((prompt) => (
+              <PromptCard
+                key={prompt.id}
+                id={prompt.id}
+                title={prompt.title}
+                content={prompt.content}
+                isEditing={prompt.isEditing}
+                onDelete={deletePrompt}
+                onUpdate={updatePrompt}
+                onEditingChange={(isEditing) => updateEditingState(prompt.id, isEditing)}
+                isIncluded={prompt.isIncluded}
+                onIncludeChange={(isIncluded) => updateIncludeState(prompt.id, isIncluded)}
+                summarySnapshot={prompt.summarySnapshot}
+                onSummarySnapshotChange={updateSummarySnapshot}
               />
-              <div className="flex h-full flex-col px-4 pb-4 pt-2">
-                <SidebarHeader className="flex items-center gap-2 px-0 pb-4">
-                  <SidebarMenu className="flex-row items-center gap-2">
-                    <SidebarMenuItem className="w-auto">
-                      <PanelTrigger
-                        onClick={() => setIsOpen(false)}
-                        srLabel="Close prompt panel"
-                      />
-                    </SidebarMenuItem>
-                    <SidebarMenuItem className="w-auto">
-                      <SidebarMenuButton
-                        asChild
-                        size="lg"
-                        className="w-auto justify-start px-0 font-semibold"
-                      >
-                        <span className="rounded-md px-3 py-1 text-xl">Structured Prompts</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  </SidebarMenu>
-                </SidebarHeader>
-                <div className="flex-1 space-y-4 overflow-y-auto">
-                  {prompts.map((prompt) => (
-                    <PromptCard
-                      key={prompt.id}
-                      id={prompt.id}
-                      title={prompt.title}
-                      content={prompt.content}
-                      isEditing={prompt.isEditing}
-                      onDelete={deletePrompt}
-                      onUpdate={updatePrompt}
-                      onEditingChange={(isEditing) => updateEditingState(prompt.id, isEditing)}
-                      isIncluded={prompt.isIncluded}
-                      onIncludeChange={(isIncluded) => updateIncludeState(prompt.id, isIncluded)}
-                      summarySnapshot={prompt.summarySnapshot}
-                      onSummarySnapshotChange={updateSummarySnapshot}
-                    />
-                  ))}
-                </div>
+            ))}
+          </div>
 
-                <Button
-                  onClick={addPrompt}
-                  variant="outline"
-                  className="mt-4 flex items-center justify-center rounded-lg border-2 border-dashed border-yellow-400 bg-yellow-50 p-3 text-yellow-700 hover:bg-yellow-100 dark:border-yellow-700 dark:bg-yellow-950/20 dark:text-yellow-200 dark:hover:bg-yellow-900/40"
-                >
-                  <Plus className="size-6 text-yellow-600" />
-                </Button>
+          <Button
+            onClick={addPrompt}
+            variant="outline"
+            className="mt-4 flex items-center justify-center rounded-lg border-2 border-dashed border-yellow-400 bg-yellow-50 p-3 text-yellow-700 hover:bg-yellow-100 dark:border-yellow-700 dark:bg-yellow-950/20 dark:text-yellow-200 dark:hover:bg-yellow-900/40"
+          >
+            <Plus className="size-6 text-yellow-600" />
+          </Button>
 
-                <Button
-                  onClick={sendAllPrompts}
-                  disabled={isSending}
-                  className="mt-4 flex items-center justify-center gap-2 rounded-lg bg-yellow-500 p-3 text-white hover:bg-yellow-600 disabled:opacity-50"
-                >
-                  {isSending ? (
-                    <Loader2 className="size-5 animate-spin" />
-                  ) : (
-                    <ArrowLeft className="size-5" />
-                  )}
-                  <span>{isSending ? "Sending…" : "Send all prompts"}</span>
-                </Button>
-              </div>
-            </Panel>
-          )}
+          <Button
+            onClick={sendAllPrompts}
+            disabled={isSending}
+            className="mt-4 flex items-center justify-center gap-2 rounded-lg bg-yellow-500 p-3 text-white hover:bg-yellow-600 disabled:opacity-50"
+          >
+            {isSending ? (
+              <Loader2 className="size-5 animate-spin" />
+            ) : (
+              <ArrowLeft className="size-5" />
+            )}
+            <span>{isSending ? "Sending…" : "Send all prompts"}</span>
+          </Button>
         </div>
-      </div>
+      </Panel>
     </>
   );
 }

@@ -43,6 +43,7 @@ export const Assistant = () => {
   const runtime = useAISDKRuntime(chat);
   const [cinematicIndex, setCinematicIndex] = useState(0);
   const [isSendingCinematic, setIsSendingCinematic] = useState(false);
+  const [structifyFeature, setStructifyFeature] = useState(true);
 
   // 4. Wait for client-side mount to avoid hydration mismatch
   const [isMounted, setIsMounted] = useState(false);
@@ -96,6 +97,10 @@ export const Assistant = () => {
     ],
   );
 
+  const toggleStructifyFeature = useCallback(() => {
+    setStructifyFeature((prev) => !prev);
+  }, []);
+
   if (!isMounted) {
     return null;
   }
@@ -105,14 +110,17 @@ export const Assistant = () => {
       <CinematicProvider value={cinematicContextValue}>
         <SidebarProvider>
           <div className="flex h-dvh w-full pr-0.5">
-            <ThreadListSidebar />
+            <ThreadListSidebar
+              structifyFeature={structifyFeature}
+              onToggleStructifyFeature={toggleStructifyFeature}
+            />
             <SidebarInset>
               <SidebarExpandTrigger />
               <div className="flex-1 overflow-hidden">
-                <Thread />
+                <Thread structifyFeature={structifyFeature} />
               </div>
             </SidebarInset>
-            <PromptPanel />
+            {structifyFeature && <PromptPanel />}
           </div>
         </SidebarProvider>
       </CinematicProvider>

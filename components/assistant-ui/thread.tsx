@@ -32,7 +32,7 @@ import type {
   ThreadUserMessagePart,
 } from "@assistant-ui/react";
 
-import { type FC, useCallback, useMemo } from "react";
+import { type FC, useCallback, useMemo, createContext, useContext } from "react";
 import { LazyMotion, MotionConfig, domAnimation } from "motion/react";
 import * as m from "motion/react-m";
 
@@ -49,38 +49,48 @@ import {
 import { cn } from "@/lib/utils";
 import { dispatchPromptCollect } from "@/lib/prompt-collector";
 import { useOptionalCinematicContext } from "@/context/cinematic-context";
-export const Thread: FC = () => {
+type ThreadProps = {
+  structifyFeature?: boolean;
+};
+
+const StructifyFeatureContext = createContext(true);
+
+const useStructifyFeature = () => useContext(StructifyFeatureContext);
+
+export const Thread: FC<ThreadProps> = ({ structifyFeature = true }) => {
   return (
-    <LazyMotion features={domAnimation}>
-      <MotionConfig reducedMotion="user">
-        <ThreadPrimitive.Root
-          className="aui-root aui-thread-root @container flex h-full flex-col bg-background"
-          style={{
-            ["--thread-max-width" as string]: "44rem",
-          }}
-        >
-          <ThreadPrimitive.Viewport className="aui-thread-viewport relative flex flex-1 flex-col overflow-x-auto overflow-y-scroll px-4">
-            <ThreadPrimitive.If empty>
-              <ThreadWelcome />
-            </ThreadPrimitive.If>
+    <StructifyFeatureContext.Provider value={structifyFeature}>
+      <LazyMotion features={domAnimation}>
+        <MotionConfig reducedMotion="user">
+          <ThreadPrimitive.Root
+            className="aui-root aui-thread-root @container flex h-full flex-col bg-background"
+            style={{
+              ["--thread-max-width" as string]: "44rem",
+            }}
+          >
+            <ThreadPrimitive.Viewport className="aui-thread-viewport relative flex flex-1 flex-col overflow-x-auto overflow-y-scroll px-4">
+              <ThreadPrimitive.If empty>
+                <ThreadWelcome />
+              </ThreadPrimitive.If>
 
-            <ThreadPrimitive.Messages
-              components={{
-                UserMessage,
-                EditComposer,
-                AssistantMessage,
-              }}
-            />
+              <ThreadPrimitive.Messages
+                components={{
+                  UserMessage,
+                  EditComposer,
+                  AssistantMessage,
+                }}
+              />
 
-            <ThreadPrimitive.If empty={false}>
-              <div className="aui-thread-viewport-spacer min-h-8 grow" />
-            </ThreadPrimitive.If>
+              <ThreadPrimitive.If empty={false}>
+                <div className="aui-thread-viewport-spacer min-h-8 grow" />
+              </ThreadPrimitive.If>
 
-            <Composer />
-          </ThreadPrimitive.Viewport>
-        </ThreadPrimitive.Root>
-      </MotionConfig>
-    </LazyMotion>
+              <Composer />
+            </ThreadPrimitive.Viewport>
+          </ThreadPrimitive.Root>
+        </MotionConfig>
+      </LazyMotion>
+    </StructifyFeatureContext.Provider>
   );
 };
 
@@ -261,6 +271,8 @@ const AssistantMessage: FC = () => {
 };
 
 const AssistantActionBar: FC = () => {
+  const structifyFeature = useStructifyFeature();
+
   return (
     <ActionBarPrimitive.Root
       hideWhenRunning
@@ -268,8 +280,12 @@ const AssistantActionBar: FC = () => {
       autohideFloat="single-branch"
       className="aui-assistant-action-bar-root col-start-3 row-start-2 -ml-1 flex gap-1 text-muted-foreground data-floating:absolute data-floating:rounded-md data-floating:border data-floating:bg-background data-floating:p-1 data-floating:shadow-sm"
     >
-      <CollectPromptButton className="aui-assistant-action-collect size-6 p-1.5" />
-      <RewindButton />
+      {structifyFeature && (
+        <>
+          <CollectPromptButton className="aui-assistant-action-collect size-6 p-1.5" />
+          <RewindButton />
+        </>
+      )}
       <DeleteRoundButton />
       <ActionBarPrimitive.Copy asChild>
         <TooltipIconButton tooltip="Copy">

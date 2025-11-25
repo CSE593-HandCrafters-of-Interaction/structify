@@ -1,5 +1,4 @@
 import * as React from "react";
-import Link from "next/link";
 import {
   Sidebar,
   SidebarContent,
@@ -13,30 +12,43 @@ import {
 import { ThreadList } from "@/components/assistant-ui/thread-list";
 import { StructifyIcon } from "../logo/structify";
 
+type ThreadListSidebarProps = React.ComponentProps<typeof Sidebar> & {
+  structifyFeature: boolean;
+  onToggleStructifyFeature: () => void;
+};
+
 export function ThreadListSidebar({
+  structifyFeature,
+  onToggleStructifyFeature,
   ...props
-}: React.ComponentProps<typeof Sidebar>) {
+}: ThreadListSidebarProps) {
   return (
     <Sidebar {...props}>
       <SidebarHeader className="aui-sidebar-header mb-2 border-b">
         <div className="aui-sidebar-header-content flex items-center justify-between">
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton size="lg" asChild>
-                <Link
-                  href="https://github.com/everydaylucky/cse593-structured-prompt"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <div className="aui-sidebar-header-icon-wrapper flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                    <StructifyIcon className="aui-sidebar-header-icon size-4" />
-                  </div>
-                  <div className="aui-sidebar-header-heading mr-6 flex flex-col gap-0.5 leading-none">
-                    <span className="aui-sidebar-header-title font-semibold">
-                      Structify
-                    </span>
-                  </div>
-                </Link>
+              <SidebarMenuButton
+                size="lg"
+                aria-pressed={structifyFeature}
+                onClick={onToggleStructifyFeature}
+                title={
+                  structifyFeature
+                    ? "Hide structured prompts panel"
+                    : "Show structured prompts panel"
+                }
+              >
+                <div className="aui-sidebar-header-icon-wrapper flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                  <StructifyIcon className="aui-sidebar-header-icon size-4" />
+                </div>
+                <div className="aui-sidebar-header-heading mr-6 flex flex-col gap-0.5 leading-none">
+                  <span className="aui-sidebar-header-title font-semibold">
+                    Structify
+                  </span>
+                  <span className="aui-sidebar-header-subtitle text-xs text-muted-foreground">
+                    {structifyFeature ? "Features on" : "Features off"}
+                  </span>
+                </div>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>

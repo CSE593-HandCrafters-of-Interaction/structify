@@ -151,7 +151,7 @@ export const PanelExpandTrigger = ({
         variant="ghost"
         onClick={onOpen}
         aria-label={srLabel}
-        className="pointer-events-auto shadow-md"
+        className="pointer-events-auto shadow-md size-7"
       >
         <PanelRight />
       </Button>

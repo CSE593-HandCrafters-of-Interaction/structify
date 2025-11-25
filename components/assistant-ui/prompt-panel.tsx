@@ -19,6 +19,7 @@ import {
   PanelResizer,
 } from "../ui/panel";
 import { PROMPT_COLLECT_EVENT, type PromptCollectDetail } from "@/lib/prompt-collector";
+import { useIsMobile } from "@/hooks/use-mobile";
 import initialPrompts from "@/data/initial.json";
 
 interface PromptPanelProps {
@@ -39,23 +40,16 @@ const PANEL_DEFAULT_WIDTH = 320;
 const PANEL_MIN_WIDTH = 260;
 const PANEL_MAX_WIDTH_RATIO = 2 / 3;
 const PANEL_MAX_WIDTH_FALLBACK = 500;
-const PANEL_MOBILE_BREAKPOINT = 768;
 
-const getPanelDimensions = () => {
+const getPanelMaxWidth = (isMobile: boolean) => {
   if (typeof window === "undefined") {
-    return {
-      maxWidth: PANEL_MAX_WIDTH_FALLBACK,
-      isMobile: false,
-    };
+    return PANEL_MAX_WIDTH_FALLBACK;
   }
 
   const viewportWidth = window.innerWidth;
-  const isMobile = viewportWidth <= PANEL_MOBILE_BREAKPOINT;
-  const maxWidth = isMobile
+  return isMobile
     ? viewportWidth
     : Math.round(viewportWidth * PANEL_MAX_WIDTH_RATIO);
-
-  return { maxWidth, isMobile };
 };
 
 const clampPanelWidth = (value: number, maxWidth: number) =>
@@ -63,11 +57,12 @@ const clampPanelWidth = (value: number, maxWidth: number) =>
 
 export function PromptPanel(props: PromptPanelProps = {}) {
   const { onWidthChange } = props;
+  const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
   const [isSending, setIsSending] = useState(false);
-  const [panelMaxWidth, setPanelMaxWidth] = useState(() => getPanelDimensions().maxWidth);
+  const [panelMaxWidth, setPanelMaxWidth] = useState(() => getPanelMaxWidth(isMobile));
   const [panelWidth, setPanelWidth] = useState(() => {
-    const { maxWidth, isMobile } = getPanelDimensions();
+    const maxWidth = getPanelMaxWidth(isMobile);
     return isMobile ? maxWidth : clampPanelWidth(PANEL_DEFAULT_WIDTH, maxWidth);
   });
   const api = useAssistantApi();
@@ -157,10 +152,10 @@ Generate your response and follow all instructions above.`;
     }
 
     const handleResize = () => {
-      const { maxWidth: nextMaxWidth, isMobile: isMobileViewport } = getPanelDimensions();
+      const nextMaxWidth = getPanelMaxWidth(isMobile);
       setPanelMaxWidth(nextMaxWidth);
       setPanelWidth((prevWidth) =>
-        isMobileViewport ? nextMaxWidth : clampPanelWidth(prevWidth, nextMaxWidth),
+        isMobile ? nextMaxWidth : clampPanelWidth(prevWidth, nextMaxWidth),
       );
     };
 
@@ -169,7 +164,7 @@ Generate your response and follow all instructions above.`;
     return () => {
       window.removeEventListener("resize", handleResize);
     };
-  }, []);
+  }, [isMobile]);
 
   useEffect(() => {
     const handleCollect = (event: Event) => {

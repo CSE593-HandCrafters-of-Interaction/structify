@@ -16,6 +16,7 @@ import {
 import { ThreadListSidebar } from "@/components/assistant-ui/threadlist-sidebar";
 import { PromptPanel } from "@/components/assistant-ui/prompt-panel";
 import { PANEL_SLIDE_DURATION_MS } from "@/components/ui/panel";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 type AssistantThreadMessage = UIMessage & {
   content: string;
@@ -26,6 +27,8 @@ const cinematicPrompts = Array.isArray(cinematicScript)
       .map((entry) => (typeof entry === "string" ? entry.trim() : ""))
       .filter((entry) => entry.length > 0)
   : [];
+const CINEMATIC_LABEL_DESKTOP_LENGTH = 48;
+const CINEMATIC_LABEL_MOBILE_LENGTH = 28;
 
 export const Assistant = () => {
   const transport = useMemo(
@@ -47,19 +50,29 @@ export const Assistant = () => {
   const [structifyFeature, setStructifyFeature] = useState(false);
   const [promptPanelWidth, setPromptPanelWidth] = useState(0);
 
+  const isMobileViewport = useIsMobile();
+
   // 4. Wait for client-side mount to avoid hydration mismatch
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
+
   const nextPrompt = cinematicPrompts[cinematicIndex] ?? null;
-  const nextPromptLabel =
-    nextPrompt === null
-      ? null
-      : nextPrompt.length > 48
-        ? `${nextPrompt.slice(0, 48)}…`
-        : nextPrompt;
+  const nextPromptLabel = useMemo(() => {
+    if (nextPrompt === null) {
+      return null;
+    }
+
+    const maxLength = isMobileViewport
+      ? CINEMATIC_LABEL_MOBILE_LENGTH
+      : CINEMATIC_LABEL_DESKTOP_LENGTH;
+
+    return nextPrompt.length > maxLength
+      ? `${nextPrompt.slice(0, maxLength)}…`
+      : nextPrompt;
+  }, [isMobileViewport, nextPrompt]);
   const hasNextPrompt = Boolean(nextPrompt);
 
   const sendNextPrompt = useCallback(async () => {

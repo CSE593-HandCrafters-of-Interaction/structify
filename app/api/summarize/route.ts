@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { openai } from "@ai-sdk/openai";
+import { google } from "@ai-sdk/google";
 import { generateText } from "ai";
 
-const SUMMARIZE_MODEL = openai("gpt-4o-mini");
+const SUMMARIZE_MODEL = google("models/gemini-1.5-flash-latest"); // 或你想用的其他 Gemini 模型
 
 interface SummarizeRequest {
   title?: string;
@@ -41,4 +41,3 @@ export async function POST(req: Request) {
     );
   }
 }
-

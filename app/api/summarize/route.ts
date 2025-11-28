@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { google } from "@ai-sdk/google";
 import { generateText } from "ai";
 
-const SUMMARIZE_MODEL = google("models/gemini-1.5-flash-latest"); // 或你想用的其他 Gemini 模型
+const SUMMARIZE_MODEL = google("models/gemini-flash-latest"); // 或你想用的其他 Gemini 模型
 
 interface SummarizeRequest {
   title?: string;

@@ -33,6 +33,7 @@ interface PromptItem {
   isEditing?: boolean;
   isIncluded: boolean;
   summarySnapshot?: SummarySnapshot;
+  suggestVersion?: number;
 }
 
 const PANEL_FLOATING = true;
@@ -160,6 +161,7 @@ export function PromptPanel(props: PromptPanelProps = {}) {
                   : p.content,
               isIncluded:
                 typeof s.isIncluded === "boolean" ? s.isIncluded : p.isIncluded,
+              suggestVersion: (p.suggestVersion ?? 0) + 1,
             };
           }),
         );
@@ -332,6 +334,7 @@ Generate your response and follow all instructions above.`;
                 onSummarySnapshotChange={updateSummarySnapshot}
                 onSuggest={handleSuggestCard}
                 isSuggesting={suggestingCardId === prompt.id}
+                suggestVersion={prompt.suggestVersion}
               />
             ))}
           </div>

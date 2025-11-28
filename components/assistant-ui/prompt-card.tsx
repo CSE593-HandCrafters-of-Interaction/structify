@@ -26,6 +26,7 @@ interface PromptCardProps {
   onIncludeChange?: (isIncluded: boolean) => void;
   onSuggest?: (id: string) => void;
   isSuggesting?: boolean;
+  suggestVersion?: number;
   summarySnapshot?: SummarySnapshot | null;
   onSummarySnapshotChange?: (id: string, snapshot?: SummarySnapshot) => void;
 }
@@ -42,6 +43,7 @@ export function PromptCard({
   onIncludeChange,
   onSuggest,
   isSuggesting = false,
+  suggestVersion,
   summarySnapshot,
   onSummarySnapshotChange
 }: PromptCardProps) {
@@ -52,11 +54,10 @@ export function PromptCard({
   const autoSaveReadyRef = useRef(false);
 
   useEffect(() => {
-    if (!isEditing) {
-      setEditTitle(title);
-      setEditContent(content.join("\n"));
-    }
-  }, [title, content, isEditing]);
+    if (suggestVersion == null) return;
+    setEditTitle(title);
+    setEditContent(content.join("\n"));
+  }, [suggestVersion, title, content]);
 
   useLayoutEffect(() => {
     const textarea = textareaRef.current;

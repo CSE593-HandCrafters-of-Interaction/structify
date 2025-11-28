@@ -24,6 +24,9 @@ interface PromptCardProps {
   onEditingChange?: (isEditing: boolean) => void;
   isIncluded: boolean;
   onIncludeChange?: (isIncluded: boolean) => void;
+  onSuggest?: (id: string) => void;
+  isSuggesting?: boolean;
+  suggestVersion?: number;
   summarySnapshot?: SummarySnapshot | null;
   onSummarySnapshotChange?: (id: string, snapshot?: SummarySnapshot) => void;
 }
@@ -38,6 +41,9 @@ export function PromptCard({
   onEditingChange,
   isIncluded,
   onIncludeChange,
+  onSuggest,
+  isSuggesting = false,
+  suggestVersion,
   summarySnapshot,
   onSummarySnapshotChange
 }: PromptCardProps) {
@@ -48,11 +54,10 @@ export function PromptCard({
   const autoSaveReadyRef = useRef(false);
 
   useEffect(() => {
-    if (!isEditing) {
-      setEditTitle(title);
-      setEditContent(content.join("\n"));
-    }
-  }, [title, content, isEditing]);
+    if (suggestVersion == null) return;
+    setEditTitle(title);
+    setEditContent(content.join("\n"));
+  }, [suggestVersion, title, content]);
 
   useLayoutEffect(() => {
     const textarea = textareaRef.current;
@@ -153,6 +158,37 @@ export function PromptCard({
           <Loader2 className="size-4 animate-spin" />
         ) : (
           hasSnapshot ? "Undo" : "Summarize"
+        )}
+      </Button>
+    );
+  };
+
+  const renderSuggestButton = (className?: string) => {
+    if (!isEditing) return null;
+    if (!onSuggest) return null;
+
+    const hasLoading = isSuggesting;
+
+    return (
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={(e) => {
+          e.stopPropagation();
+          if (hasLoading) return;
+          onSuggest(id);
+        }}
+        disabled={hasLoading}
+        className={cn(
+          "h-auto rounded-full px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800",
+          className,
+        )}
+      >
+        {hasLoading ? (
+          <Loader2 className="size-4 animate-spin" />
+        ) : (
+          "Suggest"
         )}
       </Button>
     );
@@ -277,6 +313,7 @@ export function PromptCard({
           />
           <div className="flex flex-wrap items-center gap-2">
             {renderSummarizeUndoButton()}
+            {renderSuggestButton()}
             <Button
               type="button"
               onClick={handleDone}
@@ -310,6 +347,7 @@ export function PromptCard({
           <div className="mt-3 flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               {renderSummarizeUndoButton("px-3")}
+              {renderSuggestButton("px-3")}
             </div>
             <Button
               type="button"
@@ -319,7 +357,7 @@ export function PromptCard({
                 e.stopPropagation();
                 onEditingChange?.(true);
               }}
-              className="size-8 rounded-full border border-yellow-400 text-yellow-700 hover:bg-yellow-100 dark:border-yellow-600 dark:text-yellow-200 dark:hover:bg-yellow-900"
+              className="size-8 rounded-full border border-yellow-600 text-yellow-700 hover:bg-yellow-100 dark:border-yellow-600 dark:text-yellow-200 dark:hover:bg-yellow-900"
             >
               <Pencil className="size-4 text-yellow-600" />
             </Button>

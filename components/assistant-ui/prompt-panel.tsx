@@ -33,6 +33,7 @@ interface PromptItem {
   isEditing?: boolean;
   isIncluded: boolean;
   summarySnapshot?: SummarySnapshot;
+  suggestVersion?: number;
 }
 
 const PANEL_FLOATING = true;
@@ -60,6 +61,7 @@ export function PromptPanel(props: PromptPanelProps = {}) {
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [suggestingCardId, setSuggestingCardId] = useState<string | null>(null);
   const [panelMaxWidth, setPanelMaxWidth] = useState(() => getPanelMaxWidth(isMobile));
   const [panelWidth, setPanelWidth] = useState(() => {
     const maxWidth = getPanelMaxWidth(isMobile);
@@ -97,6 +99,122 @@ export function PromptPanel(props: PromptPanelProps = {}) {
       )),
     );
   }, []);
+
+  type SuggestionPatch = {
+    cardId: string | null;
+    title?: string;
+    content?: string[];
+    isIncluded?: boolean;
+  };
+
+  type SuggestResponse = {
+    suggestions?: SuggestionPatch[];
+  };
+
+  const handleSuggestCard = useCallback(
+    async (focusId: string) => {
+      setSuggestingCardId(focusId);
+
+      try {
+        const response = await fetch("/api/suggest", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            cards: prompts.map((p) => ({
+              id: p.id,
+              title: p.title,
+              content: p.content,
+              isIncluded: p.isIncluded,
+            })),
+            focusCardId: focusId,
+          }),
+        });
+
+        if (!response.ok) {
+          console.error("Suggest request failed with", response.status);
+          return;
+        }
+
+        const data = (await response.json()) as SuggestResponse;
+        const suggestions = Array.isArray(data.suggestions)
+          ? data.suggestions
+          : [];
+
+        if (suggestions.length === 0) {
+          console.log("[PromptPanel] suggest: no suggestions returned");
+          return;
+        }
+
+        setPrompts((prevPrompts) => {
+          const updates = suggestions.filter(
+            (s): s is SuggestionPatch & { cardId: string } =>
+              typeof s.cardId === "string" && !!s.cardId,
+          );
+          const creations = suggestions.filter(
+            (s) => s.cardId === null,
+          );
+
+          let next = prevPrompts.map((p) => {
+            const s = updates.find((u) => u.cardId === p.id);
+            if (!s) return p;
+
+            return {
+              ...p,
+              title:
+                typeof s.title === "string" && s.title.length > 0
+                  ? s.title
+                  : p.title,
+              content:
+                Array.isArray(s.content) && s.content.length > 0
+                  ? s.content
+                  : p.content,
+              isIncluded:
+                typeof s.isIncluded === "boolean"
+                  ? s.isIncluded
+                  : p.isIncluded,
+              suggestVersion: (p.suggestVersion ?? 0) + 1,
+            };
+          });
+
+          if (creations.length > 0) {
+            const focusIndex = next.findIndex((p) => p.id === focusId);
+            const insertIndex =
+              focusIndex >= 0 ? focusIndex + 1 : next.length;
+
+            const timestamp = Date.now();
+
+            const newItems: PromptItem[] = creations.map((c, index) => ({
+              id: `${timestamp}-${index}`,
+              title: c.title || "New Card",
+              content: Array.isArray(c.content) ? c.content : [],
+              isIncluded:
+                typeof c.isIncluded === "boolean" ? c.isIncluded : true,
+              isEditing: true,
+              summarySnapshot: undefined,
+              suggestVersion: 0,
+            }));
+
+            next = [
+              ...next.slice(0, insertIndex),
+              ...newItems,
+              ...next.slice(insertIndex),
+            ];
+          }
+
+          return next;
+        });
+      } catch (error) {
+        console.error("Failed to suggest prompts:", error);
+      } finally {
+        setSuggestingCardId((current) =>
+          current === focusId ? null : current,
+        );
+      }
+    },
+    [prompts],
+  );
 
   const sendAllPrompts = async () => {
     setPrompts(prompts.map(p => ({ ...p, isEditing: false })));
@@ -256,6 +374,9 @@ Generate your response and follow all instructions above.`;
                 onIncludeChange={(isIncluded) => updateIncludeState(prompt.id, isIncluded)}
                 summarySnapshot={prompt.summarySnapshot}
                 onSummarySnapshotChange={updateSummarySnapshot}
+                onSuggest={handleSuggestCard}
+                isSuggesting={suggestingCardId === prompt.id}
+                suggestVersion={prompt.suggestVersion}
               />
             ))}
           </div>

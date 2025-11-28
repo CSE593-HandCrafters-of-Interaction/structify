@@ -60,6 +60,7 @@ export function PromptPanel(props: PromptPanelProps = {}) {
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [suggestingCardId, setSuggestingCardId] = useState<string | null>(null);
   const [panelMaxWidth, setPanelMaxWidth] = useState(() => getPanelMaxWidth(isMobile));
   const [panelWidth, setPanelWidth] = useState(() => {
     const maxWidth = getPanelMaxWidth(isMobile);
@@ -98,9 +99,39 @@ export function PromptPanel(props: PromptPanelProps = {}) {
     );
   }, []);
 
-  const handleSuggestCard = useCallback((id: string) => {
-    console.log("[PromptPanel] suggest card", id);
-  }, []);
+  const handleSuggestCard = useCallback(async (id: string) => {
+    setSuggestingCardId(id);
+
+    try {
+      const response = await fetch("/api/suggest", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          cards: prompts.map(p => ({
+            id: p.id,
+            title: p.title,
+            content: p.content,
+            isIncluded: p.isIncluded,
+          })),
+          focusCardId: id,
+        }),
+      });
+
+      if (!response.ok) {
+        console.error("Suggest request failed with", response.status);
+        return;
+      }
+
+      const data = await response.json();
+      console.log("[PromptPanel] suggest response", data);
+    } catch (error) {
+      console.error("Failed to suggest prompts:", error);
+    } finally {
+      setSuggestingCardId((current) => (current === id ? null : current));
+    }
+  }, [prompts]);
 
   const sendAllPrompts = async () => {
     setPrompts(prompts.map(p => ({ ...p, isEditing: false })));
@@ -261,6 +292,7 @@ Generate your response and follow all instructions above.`;
                 summarySnapshot={prompt.summarySnapshot}
                 onSummarySnapshotChange={updateSummarySnapshot}
                 onSuggest={handleSuggestCard}
+                isSuggesting={suggestingCardId === prompt.id}
               />
             ))}
           </div>

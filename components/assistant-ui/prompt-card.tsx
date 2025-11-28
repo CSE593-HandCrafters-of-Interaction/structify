@@ -24,6 +24,7 @@ interface PromptCardProps {
   onEditingChange?: (isEditing: boolean) => void;
   isIncluded: boolean;
   onIncludeChange?: (isIncluded: boolean) => void;
+  onSuggest?: (id: string) => void;
   summarySnapshot?: SummarySnapshot | null;
   onSummarySnapshotChange?: (id: string, snapshot?: SummarySnapshot) => void;
 }
@@ -38,6 +39,7 @@ export function PromptCard({
   onEditingChange,
   isIncluded,
   onIncludeChange,
+  onSuggest,
   summarySnapshot,
   onSummarySnapshotChange
 }: PromptCardProps) {
@@ -154,6 +156,26 @@ export function PromptCard({
         ) : (
           hasSnapshot ? "Undo" : "Summarize"
         )}
+      </Button>
+    );
+  };
+
+  const renderSuggestButton = (className?: string) => {
+    if (!isEditing) return null;
+    if (!onSuggest) return null;
+
+    return (
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={(e) => {
+          e.stopPropagation();
+          onSuggest(id);
+        }}
+        className={className}
+      >
+        Suggest
       </Button>
     );
   };
@@ -277,6 +299,7 @@ export function PromptCard({
           />
           <div className="flex flex-wrap items-center gap-2">
             {renderSummarizeUndoButton()}
+            {renderSuggestButton()}  
             <Button
               type="button"
               onClick={handleDone}
@@ -310,6 +333,7 @@ export function PromptCard({
           <div className="mt-3 flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               {renderSummarizeUndoButton("px-3")}
+              {renderSuggestButton("px-3")}
             </div>
             <Button
               type="button"

@@ -98,6 +98,10 @@ export function PromptPanel(props: PromptPanelProps = {}) {
     );
   }, []);
 
+  const handleSuggestCard = useCallback((id: string) => {
+    console.log("[PromptPanel] suggest card", id);
+  }, []);
+
   const sendAllPrompts = async () => {
     setPrompts(prompts.map(p => ({ ...p, isEditing: false })));
 
@@ -256,6 +260,7 @@ Generate your response and follow all instructions above.`;
                 onIncludeChange={(isIncluded) => updateIncludeState(prompt.id, isIncluded)}
                 summarySnapshot={prompt.summarySnapshot}
                 onSummarySnapshotChange={updateSummarySnapshot}
+                onSuggest={handleSuggestCard}
               />
             ))}
           </div>

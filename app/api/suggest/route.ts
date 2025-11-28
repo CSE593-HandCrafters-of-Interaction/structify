@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { openai } from "@ai-sdk/openai";
+import { google } from "@ai-sdk/google";
 import { generateText } from "ai";
 
-const SUGGEST_MODEL = openai("gpt-5-mini");
+const SUGGEST_MODEL = google("gemini-3-pro-preview");
 
 interface SuggestCard {
   id: string;
@@ -16,20 +16,21 @@ interface SuggestRequest {
   focusCardId?: string;
 }
 
-interface SuggestionPatch {
+export interface SuggestionPatch {
   cardId: string | null;
   title?: string;
   content?: string[];
   isIncluded?: boolean;
 }
 
-interface SuggestResponse {
+export interface SuggestResponse {
   suggestions: SuggestionPatch[];
 }
 
 function parseSuggestions(raw: string): SuggestionPatch[] {
   try {
     const trimmed = raw.trim();
+    if (!trimmed) return [];
 
     const start = trimmed.indexOf("{");
     const end = trimmed.lastIndexOf("}");
@@ -44,29 +45,30 @@ function parseSuggestions(raw: string): SuggestionPatch[] {
       .map((s): SuggestionPatch | null => {
         if (typeof s !== "object" || s == null) return null;
 
+        const rawCardId = (s as any).cardId;
         const cardId =
-          typeof (s as any).cardId === "string" || (s as any).cardId === null
-            ? (s as any).cardId
+          typeof rawCardId === "string" || rawCardId === null
+            ? rawCardId
             : null;
 
+        const rawTitle = (s as any).title;
         const title =
-          typeof (s as any).title === "string" &&
-          (s as any).title.trim().length > 0
-            ? (s as any).title.trim()
+          typeof rawTitle === "string" && rawTitle.trim().length > 0
+            ? rawTitle.trim()
             : undefined;
 
-        const contentArray = Array.isArray((s as any).content)
-          ? (s as any).content
+        const rawContent = (s as any).content;
+        const contentArray = Array.isArray(rawContent)
+          ? rawContent
               .map((line: unknown) =>
                 typeof line === "string" ? line.trim() : "",
               )
               .filter((line: string) => line.length > 0)
           : undefined;
 
+        const rawIncluded = (s as any).isIncluded;
         const isIncluded =
-          typeof (s as any).isIncluded === "boolean"
-            ? (s as any).isIncluded
-            : undefined;
+          typeof rawIncluded === "boolean" ? rawIncluded : undefined;
 
         if (!title && (!contentArray || contentArray.length === 0) && isIncluded === undefined) {
           return null;
@@ -81,7 +83,7 @@ function parseSuggestions(raw: string): SuggestionPatch[] {
       })
       .filter((s): s is SuggestionPatch => s !== null);
   } catch (error) {
-    console.error("Failed to parse suggestions JSON:", error);
+    console.error("[suggest] Failed to parse suggestions JSON:", error);
     return [];
   }
 }
@@ -111,6 +113,7 @@ export async function POST(req: Request) {
           Array.isArray(card.content) && card.content.length > 0
             ? card.content.join("\n")
             : "(empty)";
+
         return [
           `Card ID: ${card.id}`,
           `Title: ${card.title || "(Untitled)"}`,

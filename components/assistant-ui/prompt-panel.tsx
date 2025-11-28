@@ -100,20 +100,20 @@ export function PromptPanel(props: PromptPanelProps = {}) {
     );
   }, []);
 
-  type Suggestion = {
-    cardId: string;
+  type SuggestionPatch = {
+    cardId: string | null;
     title?: string;
     content?: string[];
     isIncluded?: boolean;
   };
 
   type SuggestResponse = {
-    suggestions?: Suggestion[];
+    suggestions?: SuggestionPatch[];
   };
 
   const handleSuggestCard = useCallback(
-    async (id: string) => {
-      setSuggestingCardId(id);
+    async (focusId: string) => {
+      setSuggestingCardId(focusId);
 
       try {
         const response = await fetch("/api/suggest", {
@@ -128,7 +128,7 @@ export function PromptPanel(props: PromptPanelProps = {}) {
               content: p.content,
               isIncluded: p.isIncluded,
             })),
-            focusCardId: id,
+            focusCardId: focusId,
           }),
         });
 
@@ -143,32 +143,74 @@ export function PromptPanel(props: PromptPanelProps = {}) {
           : [];
 
         if (suggestions.length === 0) {
-          console.log("[PromptPanel] suggest response has no suggestions");
+          console.log("[PromptPanel] suggest: no suggestions returned");
           return;
         }
 
-        setPrompts((prevPrompts) =>
-          prevPrompts.map((p) => {
-            const s = suggestions.find((s) => s.cardId === p.id);
+        setPrompts((prevPrompts) => {
+          const updates = suggestions.filter(
+            (s): s is SuggestionPatch & { cardId: string } =>
+              typeof s.cardId === "string" && !!s.cardId,
+          );
+          const creations = suggestions.filter(
+            (s) => s.cardId === null,
+          );
+
+          let next = prevPrompts.map((p) => {
+            const s = updates.find((u) => u.cardId === p.id);
             if (!s) return p;
 
             return {
               ...p,
-              title: typeof s.title === "string" && s.title.length > 0 ? s.title : p.title,
+              title:
+                typeof s.title === "string" && s.title.length > 0
+                  ? s.title
+                  : p.title,
               content:
                 Array.isArray(s.content) && s.content.length > 0
                   ? s.content
                   : p.content,
               isIncluded:
-                typeof s.isIncluded === "boolean" ? s.isIncluded : p.isIncluded,
+                typeof s.isIncluded === "boolean"
+                  ? s.isIncluded
+                  : p.isIncluded,
               suggestVersion: (p.suggestVersion ?? 0) + 1,
             };
-          }),
-        );
+          });
+
+          if (creations.length > 0) {
+            const focusIndex = next.findIndex((p) => p.id === focusId);
+            const insertIndex =
+              focusIndex >= 0 ? focusIndex + 1 : next.length;
+
+            const timestamp = Date.now();
+
+            const newItems: PromptItem[] = creations.map((c, index) => ({
+              id: `${timestamp}-${index}`,
+              title: c.title || "New Card",
+              content: Array.isArray(c.content) ? c.content : [],
+              isIncluded:
+                typeof c.isIncluded === "boolean" ? c.isIncluded : true,
+              isEditing: true,
+              summarySnapshot: undefined,
+              suggestVersion: 0,
+            }));
+
+            next = [
+              ...next.slice(0, insertIndex),
+              ...newItems,
+              ...next.slice(insertIndex),
+            ];
+          }
+
+          return next;
+        });
       } catch (error) {
         console.error("Failed to suggest prompts:", error);
       } finally {
-        setSuggestingCardId((current) => (current === id ? null : current));
+        setSuggestingCardId((current) =>
+          current === focusId ? null : current,
+        );
       }
     },
     [prompts],

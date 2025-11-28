@@ -99,39 +99,78 @@ export function PromptPanel(props: PromptPanelProps = {}) {
     );
   }, []);
 
-  const handleSuggestCard = useCallback(async (id: string) => {
-    setSuggestingCardId(id);
+  type Suggestion = {
+    cardId: string;
+    title?: string;
+    content?: string[];
+    isIncluded?: boolean;
+  };
 
-    try {
-      const response = await fetch("/api/suggest", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          cards: prompts.map(p => ({
-            id: p.id,
-            title: p.title,
-            content: p.content,
-            isIncluded: p.isIncluded,
-          })),
-          focusCardId: id,
-        }),
-      });
+  type SuggestResponse = {
+    suggestions?: Suggestion[];
+  };
 
-      if (!response.ok) {
-        console.error("Suggest request failed with", response.status);
-        return;
+  const handleSuggestCard = useCallback(
+    async (id: string) => {
+      setSuggestingCardId(id);
+
+      try {
+        const response = await fetch("/api/suggest", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            cards: prompts.map((p) => ({
+              id: p.id,
+              title: p.title,
+              content: p.content,
+              isIncluded: p.isIncluded,
+            })),
+            focusCardId: id,
+          }),
+        });
+
+        if (!response.ok) {
+          console.error("Suggest request failed with", response.status);
+          return;
+        }
+
+        const data = (await response.json()) as SuggestResponse;
+        const suggestions = Array.isArray(data.suggestions)
+          ? data.suggestions
+          : [];
+
+        if (suggestions.length === 0) {
+          console.log("[PromptPanel] suggest response has no suggestions");
+          return;
+        }
+
+        setPrompts((prevPrompts) =>
+          prevPrompts.map((p) => {
+            const s = suggestions.find((s) => s.cardId === p.id);
+            if (!s) return p;
+
+            return {
+              ...p,
+              title: typeof s.title === "string" && s.title.length > 0 ? s.title : p.title,
+              content:
+                Array.isArray(s.content) && s.content.length > 0
+                  ? s.content
+                  : p.content,
+              isIncluded:
+                typeof s.isIncluded === "boolean" ? s.isIncluded : p.isIncluded,
+            };
+          }),
+        );
+      } catch (error) {
+        console.error("Failed to suggest prompts:", error);
+      } finally {
+        setSuggestingCardId((current) => (current === id ? null : current));
       }
-
-      const data = await response.json();
-      console.log("[PromptPanel] suggest response", data);
-    } catch (error) {
-      console.error("Failed to suggest prompts:", error);
-    } finally {
-      setSuggestingCardId((current) => (current === id ? null : current));
-    }
-  }, [prompts]);
+    },
+    [prompts],
+  );
 
   const sendAllPrompts = async () => {
     setPrompts(prompts.map(p => ({ ...p, isEditing: false })));

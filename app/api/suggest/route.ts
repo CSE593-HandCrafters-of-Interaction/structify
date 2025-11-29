@@ -45,19 +45,19 @@ function parseSuggestions(raw: string): SuggestionPatch[] {
       .map((s): SuggestionPatch | null => {
         if (typeof s !== "object" || s == null) return null;
 
-        const rawCardId = (s as any).cardId;
+        const rawCardId = s.cardId;
         const cardId =
           typeof rawCardId === "string" || rawCardId === null
             ? rawCardId
             : null;
 
-        const rawTitle = (s as any).title;
+        const rawTitle = s.title;
         const title =
           typeof rawTitle === "string" && rawTitle.trim().length > 0
             ? rawTitle.trim()
             : undefined;
 
-        const rawContent = (s as any).content;
+        const rawContent = s.content;
         const contentArray = Array.isArray(rawContent)
           ? rawContent
               .map((line: unknown) =>
@@ -66,7 +66,7 @@ function parseSuggestions(raw: string): SuggestionPatch[] {
               .filter((line: string) => line.length > 0)
           : undefined;
 
-        const rawIncluded = (s as any).isIncluded;
+        const rawIncluded = s.isIncluded;
         const isIncluded =
           typeof rawIncluded === "boolean" ? rawIncluded : undefined;
 

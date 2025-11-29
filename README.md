@@ -25,10 +25,10 @@ conda install -c conda-forge nodejs
 npm install
 ```
 
-2. Configure your OpenAI key by creating `.env.local` in the project root. You can find an example in `.env.example`.
+2. Configure your Gemini key by creating `.env.local` in the project root. You can find an example in `.env.example`.
 
 ```
-OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+GOOGLE_GENERATIVE_AI_API_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
 1. Start the dev server.

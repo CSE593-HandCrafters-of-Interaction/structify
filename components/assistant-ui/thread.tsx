@@ -313,48 +313,21 @@ const AssistantActionBar: FC = () => {
 };
 
 const UserMessage: FC = () => {
-  const message = useAssistantState(({ message }) => message);
-
-  const structuredCards = useMemo(() => {
-    if (message.role !== "user") {
-      return null;
-    }
-
-    const textParts = (message.content as ThreadUserMessagePart[]).flatMap(
-      (part) => {
-        if (part.type !== "text" || !part.text) {
-          return [];
-        }
-        return [part.text];
-      },
-    );
-
-    if (textParts.length === 0) {
-      return null;
-    }
-
-    const fullText = textParts.join("\n");
-    return parseStructuredPromptText(fullText);
-  }, [message.content, message.role]);
-
-  const hasStructuredPrompts =
-    !!structuredCards && structuredCards.length > 0;
-
   return (
     <MessagePrimitive.Root asChild>
       <div
-        className="aui-user-message-root mx-auto grid w-full max-w-[var(...in-from-bottom-1 first:mt-3 last:mb-5 [&:where(>*)]:col-start-2"
+        className="aui-user-message-root mx-auto grid w-full max-w-[var(--thread-max-width)] grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-1 px-3 py-1 text-sm text-foreground data-[state=pending]:animate-in data-[state=pending]:fade-in data-[state=pending]:slide-in-from-bottom-1 first:mt-3 last:mb-5 [&:where(>*)]:col-start-2"
         data-role="user"
       >
         <UserMessageAttachments />
 
         <div className="aui-user-message-content-wrapper relative col-start-2 min-w-0">
           <div className="aui-user-message-content rounded-3xl bg-muted px-5 py-2.5 break-words text-foreground">
-            {hasStructuredPrompts ? (
-              <StructuredPromptsInline cards={structuredCards!} />
-            ) : (
-              <MessagePrimitive.Parts />
-            )}
+            <MessagePrimitive.Parts
+              components={{
+                Text: UserText,
+              }}
+            />
           </div>
           <div className="aui-user-action-bar-wrapper absolute top-1/2 left-0 -translate-x-full -translate-y-1/2 pr-2">
             <UserActionBar />
@@ -480,9 +453,7 @@ const StructuredPromptsInline: FC<{ cards: StructuredPromptInlineCard[] }> = ({
             {card.title}
           </div>
           {card.content.length <= 1 ? (
-            <p className="whitespace-pre-line">
-              {card.content[0] ?? ""}
-            </p>
+            <p className="whitespace-pre-line">{card.content[0] ?? ""}</p>
           ) : (
             <ul className="ml-4 list-disc space-y-1">
               {card.content.map((line, i) => (
@@ -495,6 +466,17 @@ const StructuredPromptsInline: FC<{ cards: StructuredPromptInlineCard[] }> = ({
     </div>
   );
 };
+
+const UserText: FC<{ text: string }> = ({ text }) => {
+  const cards = parseStructuredPromptText(text);
+
+  if (cards && cards.length > 0) {
+    return <StructuredPromptsInline cards={cards} />;
+  }
+
+  return <span className="whitespace-pre-wrap">{text}</span>;
+};
+
 
 const CollectPromptButton: FC<CollectPromptButtonProps> = ({ className }) => {
   const message = useAssistantState(({ message }) => message);

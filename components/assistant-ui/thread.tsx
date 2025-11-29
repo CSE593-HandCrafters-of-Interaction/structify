@@ -313,17 +313,48 @@ const AssistantActionBar: FC = () => {
 };
 
 const UserMessage: FC = () => {
+  const message = useAssistantState(({ message }) => message);
+
+  const structuredCards = useMemo(() => {
+    if (message.role !== "user") {
+      return null;
+    }
+
+    const textParts = (message.content as ThreadUserMessagePart[]).flatMap(
+      (part) => {
+        if (part.type !== "text" || !part.text) {
+          return [];
+        }
+        return [part.text];
+      },
+    );
+
+    if (textParts.length === 0) {
+      return null;
+    }
+
+    const fullText = textParts.join("\n");
+    return parseStructuredPromptText(fullText);
+  }, [message.content, message.role]);
+
+  const hasStructuredPrompts =
+    !!structuredCards && structuredCards.length > 0;
+
   return (
     <MessagePrimitive.Root asChild>
       <div
-        className="aui-user-message-root mx-auto grid w-full max-w-[var(--thread-max-width)] animate-in auto-rows-auto grid-cols-[minmax(72px,1fr)_auto] gap-y-2 px-2 py-4 duration-150 ease-out fade-in slide-in-from-bottom-1 first:mt-3 last:mb-5 [&:where(>*)]:col-start-2"
+        className="aui-user-message-root mx-auto grid w-full max-w-[var(...in-from-bottom-1 first:mt-3 last:mb-5 [&:where(>*)]:col-start-2"
         data-role="user"
       >
         <UserMessageAttachments />
 
         <div className="aui-user-message-content-wrapper relative col-start-2 min-w-0">
           <div className="aui-user-message-content rounded-3xl bg-muted px-5 py-2.5 break-words text-foreground">
-            <MessagePrimitive.Parts />
+            {hasStructuredPrompts ? (
+              <StructuredPromptsInline cards={structuredCards!} />
+            ) : (
+              <MessagePrimitive.Parts />
+            )}
           </div>
           <div className="aui-user-action-bar-wrapper absolute top-1/2 left-0 -translate-x-full -translate-y-1/2 pr-2">
             <UserActionBar />
@@ -335,6 +366,7 @@ const UserMessage: FC = () => {
     </MessagePrimitive.Root>
   );
 };
+
 
 const UserActionBar: FC = () => {
   return (
@@ -355,6 +387,113 @@ const UserActionBar: FC = () => {
 
 type CollectPromptButtonProps = {
   className?: string;
+};
+
+type StructuredPromptInlineCard = {
+  title: string;
+  content: string[];
+};
+
+const STRUCTURED_PROMPT_HEADER =
+  "You will now receive a unified set of structured instructions.";
+const STRUCTURED_PROMPT_FINAL_MARKER = "[FINAL INSTRUCTION]";
+
+const parseStructuredPromptText = (
+  text: string | undefined,
+): StructuredPromptInlineCard[] | null => {
+  if (!text) return null;
+
+  if (
+    !text.includes(STRUCTURED_PROMPT_HEADER) ||
+    !text.includes(STRUCTURED_PROMPT_FINAL_MARKER)
+  ) {
+    return null;
+  }
+
+  const lines = text.split(/\r?\n/);
+  const cards: StructuredPromptInlineCard[] = [];
+
+  let currentTitle: string | null = null;
+  let currentContent: string[] = [];
+  let inSections = false;
+
+  const flushCurrent = () => {
+    if (currentTitle && currentContent.length > 0) {
+      cards.push({
+        title: currentTitle,
+        content: [...currentContent],
+      });
+    }
+    currentTitle = null;
+    currentContent = [];
+  };
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    if (!line) continue;
+
+    if (line.startsWith("[") && line.endsWith("]")) {
+      const title = line.slice(1, -1).trim();
+
+      if (title.toUpperCase() === "FINAL INSTRUCTION") {
+        flushCurrent();
+        break;
+      }
+
+      inSections = true;
+      flushCurrent();
+      currentTitle = title || "Untitled";
+      continue;
+    }
+
+    if (!inSections) {
+      continue;
+    }
+
+    if (line.startsWith("- ")) {
+      currentContent.push(line.slice(2).trim());
+    } else if (line.startsWith("• ")) {
+      currentContent.push(line.slice(2).trim());
+    } else {
+      currentContent.push(line);
+    }
+  }
+
+  flushCurrent();
+
+  return cards.length > 0 ? cards : null;
+};
+
+const StructuredPromptsInline: FC<{ cards: StructuredPromptInlineCard[] }> = ({
+  cards,
+}) => {
+  if (!cards.length) return null;
+
+  return (
+    <div className="flex flex-col gap-3">
+      {cards.map((card, index) => (
+        <div
+          key={`${card.title}-${index}`}
+          className="rounded-2xl border border-yellow-300 bg-yellow-50 px-4 py-3 text-sm text-foreground dark:border-yellow-600 dark:bg-yellow-950/40"
+        >
+          <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-yellow-800 dark:text-yellow-200">
+            {card.title}
+          </div>
+          {card.content.length <= 1 ? (
+            <p className="whitespace-pre-line">
+              {card.content[0] ?? ""}
+            </p>
+          ) : (
+            <ul className="ml-4 list-disc space-y-1">
+              {card.content.map((line, i) => (
+                <li key={i}>{line}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ))}
+    </div>
+  );
 };
 
 const CollectPromptButton: FC<CollectPromptButtonProps> = ({ className }) => {

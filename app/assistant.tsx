@@ -31,7 +31,7 @@ const CINEMATIC_LABEL_DESKTOP_LENGTH = 48;
 const CINEMATIC_LABEL_MOBILE_LENGTH = 28;
 
 export const Assistant = () => {
-  const [isUserStudyMode, setIsUserStudyMode] = useState(true);
+  const [isUserStudyMode, setIsUserStudyMode] = useState(false);
   const userStudyModeRef = useRef(isUserStudyMode);
   userStudyModeRef.current = isUserStudyMode;
   const transport = useMemo(

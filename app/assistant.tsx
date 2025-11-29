@@ -57,6 +57,7 @@ export const Assistant = () => {
   const [promptPanelWidth, setPromptPanelWidth] = useState(0);
   const toggleUserStudyMode = useCallback(() => {
     setIsUserStudyMode((prev) => !prev);
+    setCinematicIndex(0);
   }, []);
 
   const isMobileViewport = useIsMobile();

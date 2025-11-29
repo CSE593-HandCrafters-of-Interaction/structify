@@ -2,11 +2,12 @@
 
 import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import type { MouseEvent } from "react";
-import { X, Pencil, Loader2, EyeOff, Eye } from "lucide-react";
+import { X, Pencil, Loader2, EyeOff, Eye, Undo2, Maximize2, Minimize2, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 export interface SummarySnapshot {
   previousTitle: string;
@@ -135,31 +136,38 @@ export function PromptCard({
     const hasSnapshot = !!summarySnapshot;
     
     return (
-      <Button
-        type="button"
-        variant={hasSnapshot ? "outline" : "secondary"}
-        onClick={(e) => {
-          e.stopPropagation();
-          if (hasSnapshot) {
-            handleUndoSummary();
-          } else {
-            handleSummarize();
-          }
-        }}
-        disabled={isSummarizing || (!hasSnapshot && !hasContent)}
-        className={cn(
-          hasSnapshot
-            ? "h-auto rounded-full px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
-            : "h-auto rounded-full bg-yellow-100 px-3 py-1 text-sm font-medium text-yellow-900 hover:bg-yellow-200 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-yellow-900/30 dark:text-yellow-200 dark:hover:bg-yellow-900/50",
-          className,
-        )}
-      >
-        {isSummarizing ? (
-          <Loader2 className="size-4 animate-spin" />
-        ) : (
-          hasSnapshot ? "Undo" : "Summarize"
-        )}
-      </Button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            type="button"
+            variant={hasSnapshot ? "outline" : "secondary"}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (hasSnapshot) {
+                handleUndoSummary();
+              } else {
+                handleSummarize();
+              }
+            }}
+            disabled={isSummarizing || (!hasSnapshot && !hasContent)}
+            className={cn(
+              hasSnapshot
+                ? "h-auto rounded-full px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
+                : "h-auto rounded-full bg-yellow-100 px-3 py-1 text-sm font-medium text-yellow-900 hover:bg-yellow-200 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-yellow-900/30 dark:text-yellow-200 dark:hover:bg-yellow-900/50",
+              className,
+            )}
+          >
+            {isSummarizing ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              hasSnapshot ? <Undo2 className="size-4" /> : <Minimize2 className="size-4" />
+            )}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">
+          {hasSnapshot ? "Undo Summarize" : "Summarize"}
+        </TooltipContent>
+      </Tooltip>
     );
   };
 
@@ -170,27 +178,33 @@ export function PromptCard({
     const hasLoading = isSuggesting;
 
     return (
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        onClick={(e) => {
-          e.stopPropagation();
-          if (hasLoading) return;
-          onSuggest(id);
-        }}
-        disabled={hasLoading}
-        className={cn(
-          "h-auto rounded-full px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800",
-          className,
-        )}
-      >
-        {hasLoading ? (
-          <Loader2 className="size-4 animate-spin" />
-        ) : (
-          "Suggest"
-        )}
-      </Button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (hasLoading) return;
+              onSuggest(id);
+            }}
+            disabled={hasLoading}
+            className={cn(
+              "h-auto rounded-full bg-yellow-100 px-3 py-1 text-sm font-medium text-yellow-900 hover:bg-yellow-200 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-yellow-900/30 dark:text-yellow-200 dark:hover:bg-yellow-900/50",
+              className,
+            )}
+          >
+            {hasLoading ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Maximize2 className="size-4" />
+            )}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">
+          Suggest
+        </TooltipContent>
+      </Tooltip>
     );
   };
 
@@ -314,13 +328,20 @@ export function PromptCard({
           <div className="flex flex-wrap items-center gap-2">
             {renderSummarizeUndoButton()}
             {renderSuggestButton()}
-            <Button
-              type="button"
-              onClick={handleDone}
-              className="ml-auto h-auto rounded bg-yellow-400 px-3 py-1 text-sm text-yellow-950 hover:bg-yellow-500"
-            >
-              Done
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  onClick={handleDone}
+                  className="ml-auto h-auto rounded-full bg-yellow-400 px-3 py-1 text-sm text-yellow-950 hover:bg-yellow-500"
+                >
+                  <Check className="size-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                Done
+              </TooltipContent>
+            </Tooltip>
           </div>
         </div>
       ) : (

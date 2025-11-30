@@ -377,38 +377,43 @@ export function PromptCard({
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center gap-3">
-                <Slider
-                  value={isEditing ? [editSliderValue] : [content.value]}
-                  min={content.min ?? 0}
-                  max={content.max ?? 100}
-                  step={content.step ?? 1}
-                  onValueChange={(values) => {
-                    const newValue = values[0];
-                    if (isEditing) {
-                      setEditSliderValue(newValue);
-                      setEditContent(newValue.toString());
-                    } else {
-                      const updatedContent: PromptCardContent = {
-                        type: "slider",
-                        value: newValue,
-                        min: content.min,
-                        max: content.max,
-                        step: content.step,
-                        unit: content.unit
-                      };
-                      onUpdate?.(id, { title, content: updatedContent });
-                    }
-                  }}
-                  className={cn(
-                    "flex-1",
-                    "**:data-[slot=slider-track]:bg-gray-200",
-                    "**:data-[slot=slider-track]:dark:bg-gray-700",
-                    "**:data-[slot=slider-range]:bg-yellow-400",
-                    "**:data-[slot=slider-range]:dark:bg-yellow-600",
-                    "**:data-[slot=slider-thumb]:border-yellow-400",
-                    "**:data-[slot=slider-thumb]:dark:border-yellow-600"
-                  )}
-                />
+                <div className="flex-1 flex flex-col">
+                  <Slider
+                    value={isEditing ? [editSliderValue] : [content.value]}
+                    min={content.min ?? 0}
+                    max={content.max ?? 100}
+                    step={content.step ?? 1}
+                    onValueChange={(values) => {
+                      const newValue = values[0];
+                      if (isEditing) {
+                        setEditSliderValue(newValue);
+                        setEditContent(newValue.toString());
+                      } else {
+                        const updatedContent: PromptCardContent = {
+                          type: "slider",
+                          value: newValue,
+                          min: content.min,
+                          max: content.max,
+                          step: content.step,
+                          unit: content.unit
+                        };
+                        onUpdate?.(id, { title, content: updatedContent });
+                      }
+                    }}
+                    className={cn(
+                      "**:data-[slot=slider-track]:bg-gray-200",
+                      "**:data-[slot=slider-track]:dark:bg-gray-700",
+                      "**:data-[slot=slider-range]:bg-yellow-400",
+                      "**:data-[slot=slider-range]:dark:bg-yellow-600",
+                      "**:data-[slot=slider-thumb]:border-yellow-400",
+                      "**:data-[slot=slider-thumb]:dark:border-yellow-600"
+                    )}
+                  />
+                  <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    <span>{content.min ?? 0}</span>
+                    <span>{content.max ?? 100}</span>
+                  </div>
+                </div>
                 <div className="flex items-center gap-1 min-w-[80px]">
                   {isEditing ? (
                     <Input
@@ -438,11 +443,11 @@ export function PromptCard({
                   )}
                 </div>
               </div>
-              <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                {content.min !== undefined && <span>Min: {content.min}</span>}
-                {content.max !== undefined && <span>Max: {content.max}</span>}
-                {isEditing && content.step !== undefined && <span>Step: {content.step}</span>}
-              </div>
+              {isEditing && content.step !== undefined && (
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  <span>Step: {content.step}</span>
+                </div>
+              )}
             </div>
           ) : content?.type === "bullet" ? (
             isEditing ? (

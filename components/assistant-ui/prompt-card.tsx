@@ -278,8 +278,7 @@ export function PromptCard({
         value: numValue,
         min: content.min,
         max: content.max,
-        step: content.step,
-        unit: content.unit
+        step: content.step
       };
       onUpdate?.(id, {
         title: editTitle,
@@ -379,8 +378,8 @@ export function PromptCard({
               <div className="flex flex-col">
                 <Slider
                   value={isEditing ? [editSliderValue] : [content.value]}
-                  min={content.min ?? 0}
-                  max={content.max ?? 100}
+                  min={content.min}
+                  max={content.max}
                   step={content.step ?? 1}
                   onValueChange={(values) => {
                     const newValue = values[0];
@@ -393,8 +392,7 @@ export function PromptCard({
                         value: newValue,
                         min: content.min,
                         max: content.max,
-                        step: content.step,
-                        unit: content.unit
+                        step: content.step
                       };
                       onUpdate?.(id, { title, content: updatedContent });
                     }
@@ -409,7 +407,7 @@ export function PromptCard({
                   )}
                 />
                 <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  <span>{content.min ?? 0}</span>
+                  <span>{content.min}</span>
                   <div className="flex items-center gap-1">
                     {isEditing ? (
                       <Input
@@ -418,14 +416,14 @@ export function PromptCard({
                         onChange={(e) => {
                           const newValue = parseFloat(e.target.value) || 0;
                           const clampedValue = Math.max(
-                            content.min ?? 0,
-                            Math.min(content.max ?? 100, newValue)
+                            content.min,
+                            Math.min(content.max, newValue)
                           );
                           setEditContent(clampedValue.toString());
                           setEditSliderValue(clampedValue);
                         }}
-                        min={content.min ?? 0}
-                        max={content.max ?? 100}
+                        min={content.min}
+                        max={content.max}
                         step={content.step ?? 1}
                         className="w-20 text-sm"
                       />
@@ -434,11 +432,8 @@ export function PromptCard({
                         {content.value}
                       </span>
                     )}
-                    {content.unit && (
-                      <span className="text-sm text-gray-600 dark:text-gray-400">{content.unit}</span>
-                    )}
                   </div>
-                  <span>{content.max ?? 100}</span>
+                  <span>{content.max}</span>
                 </div>
               </div>
               {isEditing && content.step !== undefined && (

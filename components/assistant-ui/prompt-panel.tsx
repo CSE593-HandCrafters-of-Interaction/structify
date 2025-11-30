@@ -28,7 +28,7 @@ interface PromptPanelProps {
 
 export type PromptCardContent =
   | { type: "bullet"; items: string[] }
-  | { type: "slider"; value: number; unit?: string, min?: number; max?: number; step?: number };
+  | { type: "slider"; value: number; min: number; max: number; step?: number };
 
 interface PromptItem {
   id: string;
@@ -252,8 +252,7 @@ Do not repeat or restate the instructions unless explicitly asked.
           message += "  - " + item + "\n";
         });
       } else if (prompt.content.type === "slider") {
-        const sliderValue = prompt.content.value + (prompt.content.unit ? ` ${prompt.content.unit}` : "");
-        message += "  - " + sliderValue + "\n";
+        message += "  - " + prompt.content.value + "\n";
       }
       message += "\n";
     });

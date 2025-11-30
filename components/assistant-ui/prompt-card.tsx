@@ -57,9 +57,24 @@ export function PromptCard({
   const [editSliderValue, setEditSliderValue] = useState(
     content?.type === "slider" ? content.value : 0
   );
+  const [editMin, setEditMin] = useState(
+    content?.type === "slider" ? content.min : 0
+  );
+  const [editMax, setEditMax] = useState(
+    content?.type === "slider" ? content.max : 100
+  );
   const [isSummarizing, setIsSummarizing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const autoSaveReadyRef = useRef(false);
+
+  useEffect(() => {
+    if (content?.type === "slider" && !isEditing) {
+      setEditMin(content.min);
+      setEditMax(content.max);
+      setEditSliderValue(content.value);
+      setEditContent(content.value.toString());
+    }
+  }, [content, isEditing]);
 
   useEffect(() => {
     if (suggestVersion == null) return;
@@ -69,6 +84,8 @@ export function PromptCard({
     } else if (content?.type === "slider") {
       setEditContent(content.value.toString());
       setEditSliderValue(content.value);
+      setEditMin(content.min);
+      setEditMax(content.max);
     }
   }, [suggestVersion, title, content]);
 
@@ -145,6 +162,8 @@ export function PromptCard({
     } else if (previousContent.type === "slider") {
       setEditContent(previousContent.value.toString());
       setEditSliderValue(previousContent.value);
+      setEditMin(previousContent.min);
+      setEditMax(previousContent.max);
     }
     onSummarySnapshotChange?.(id);
   };
@@ -273,20 +292,25 @@ export function PromptCard({
       });
     } else if (content?.type === "slider") {
       const numValue = parseFloat(editContent) || editSliderValue;
+      const numMin = parseFloat(editMin.toString()) || 0;
+      const numMax = parseFloat(editMax.toString()) || 100;
+      const clampedValue = Math.max(numMin, Math.min(numMax, numValue));
       const nextContent: PromptCardContent = {
         type: "slider",
-        value: numValue,
-        min: content.min,
-        max: content.max,
+        value: clampedValue,
+        min: numMin,
+        max: numMax,
         step: content.step
       };
       onUpdate?.(id, {
         title: editTitle,
         content: nextContent
       });
+      setEditSliderValue(clampedValue);
+      setEditContent(clampedValue.toString());
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editTitle, editContent, editSliderValue, id, isEditing, onUpdate]);
+  }, [editTitle, editContent, editSliderValue, editMin, editMax, id, isEditing, onUpdate]);
 
   const handleDone = () => {
     onEditingChange?.(false);
@@ -378,14 +402,15 @@ export function PromptCard({
               <div className="flex flex-col">
                 <Slider
                   value={isEditing ? [editSliderValue] : [content.value]}
-                  min={content.min}
-                  max={content.max}
+                  min={isEditing ? editMin : content.min}
+                  max={isEditing ? editMax : content.max}
                   step={content.step ?? 1}
                   onValueChange={(values) => {
                     const newValue = values[0];
                     if (isEditing) {
-                      setEditSliderValue(newValue);
-                      setEditContent(newValue.toString());
+                      const clampedValue = Math.max(editMin, Math.min(editMax, newValue));
+                      setEditSliderValue(clampedValue);
+                      setEditContent(clampedValue.toString());
                     } else {
                       const updatedContent: PromptCardContent = {
                         type: "slider",
@@ -407,7 +432,26 @@ export function PromptCard({
                   )}
                 />
                 <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  <span>{content.min}</span>
+                  {isEditing ? (
+                    <Input
+                      type="number"
+                      value={editMin}
+                      onChange={(e) => {
+                        const newMin = parseFloat(e.target.value) || 0;
+                        setEditMin(newMin);
+                        if (editMax <= newMin) {
+                          setEditMax(newMin + 1);
+                        }
+                        if (editSliderValue < newMin) {
+                          setEditSliderValue(newMin);
+                          setEditContent(newMin.toString());
+                        }
+                      }}
+                      className="w-18 scale-75 origin-left"
+                    />
+                  ) : (
+                    <span>{content.min}</span>
+                  )}
                   <div className="flex items-center gap-1">
                     {isEditing ? (
                       <Input
@@ -416,14 +460,14 @@ export function PromptCard({
                         onChange={(e) => {
                           const newValue = parseFloat(e.target.value) || 0;
                           const clampedValue = Math.max(
-                            content.min,
-                            Math.min(content.max, newValue)
+                            editMin,
+                            Math.min(editMax, newValue)
                           );
                           setEditContent(clampedValue.toString());
                           setEditSliderValue(clampedValue);
                         }}
-                        min={content.min}
-                        max={content.max}
+                        min={editMin}
+                        max={editMax}
                         step={content.step ?? 1}
                         className="w-20 text-sm"
                       />
@@ -433,7 +477,26 @@ export function PromptCard({
                       </span>
                     )}
                   </div>
-                  <span>{content.max}</span>
+                  {isEditing ? (
+                    <Input
+                      type="number"
+                      value={editMax}
+                      onChange={(e) => {
+                        const newMax = parseFloat(e.target.value) || 100;
+                        setEditMax(newMax);
+                        if (editMin >= newMax) {
+                          setEditMin(newMax - 1);
+                        }
+                        if (editSliderValue > newMax) {
+                          setEditSliderValue(newMax);
+                          setEditContent(newMax.toString());
+                        }
+                      }}
+                      className="w-18 scale-75 origin-right"
+                    />
+                  ) : (
+                    <span>{content.max}</span>
+                  )}
                 </div>
               </div>
               {isEditing && content.step !== undefined && (

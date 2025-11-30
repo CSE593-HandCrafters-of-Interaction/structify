@@ -4,10 +4,27 @@ import { generateText } from "ai";
 
 const SUGGEST_MODEL = google("gemini-3-pro-preview");
 
+type BulletContent = {
+  type: "bullet";
+  items: string[];
+};
+
+type SliderContent = {
+  type: "slider";
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+};
+
+type CardContent = BulletContent | SliderContent;
+
+type IncomingContent = string[] | CardContent | null | undefined;
+
 interface SuggestCard {
   id: string;
   title: string;
-  content: string[];
+  content: IncomingContent;
   isIncluded: boolean;
 }
 
@@ -19,12 +36,107 @@ interface SuggestRequest {
 export interface SuggestionPatch {
   cardId: string | null;
   title?: string;
-  content?: string[];
+  content?: CardContent;
   isIncluded?: boolean;
 }
 
 export interface SuggestResponse {
   suggestions: SuggestionPatch[];
+}
+
+function normalizeCardContent(raw: IncomingContent): CardContent | undefined {
+  if (Array.isArray(raw)) {
+    const items = raw
+      .map((line) => (typeof line === "string" ? line.trim() : ""))
+      .filter((line) => line.length > 0);
+    if (!items.length) return undefined;
+    return { type: "bullet", items };
+  }
+
+  if (!raw || typeof raw !== "object") return undefined;
+
+  const anyRaw = raw as any;
+
+  if (anyRaw.type === "bullet") {
+    const rawItems = anyRaw.items;
+    if (!Array.isArray(rawItems)) return undefined;
+    const items = rawItems
+      .map((line: unknown) =>
+        typeof line === "string" ? line.trim() : "",
+      )
+      .filter((line: string) => line.length > 0);
+    if (!items.length) return undefined;
+    return { type: "bullet", items };
+  }
+
+  if (anyRaw.type === "slider") {
+    const toNumber = (v: unknown): number | undefined =>
+      typeof v === "number" && Number.isFinite(v) ? v : undefined;
+
+    let value = toNumber(anyRaw.value);
+    let min = toNumber(anyRaw.min);
+    let max = toNumber(anyRaw.max);
+    let step = toNumber(anyRaw.step);
+
+    if (min === undefined && max === undefined && value !== undefined) {
+      min = Math.max(0, Math.floor(value * 0.5));
+      max = Math.ceil(value * 1.5);
+    }
+    if (min === undefined) min = 0;
+    if (max === undefined) max = min + 100;
+    if (value === undefined) value = Math.min(Math.max(min, 0), max);
+    if (step === undefined || step <= 0) {
+      step = Math.max(1, Math.round((max - min) / 10));
+    }
+
+    if (max < min) {
+      const tmp = max;
+      max = min;
+      min = tmp;
+    }
+
+    if (value < min) value = min;
+    if (value > max) value = max;
+
+    return {
+      type: "slider",
+      value,
+      min,
+      max,
+      step,
+    };
+  }
+
+  return undefined;
+}
+
+function formatContentForPrompt(
+  content: IncomingContent,
+): { typeLabel: string; text: string } {
+  const normalized = normalizeCardContent(content);
+  if (!normalized) {
+    return {
+      typeLabel: "none",
+      text: "(empty)",
+    };
+  }
+
+  if (normalized.type === "bullet") {
+    return {
+      typeLabel: "bullet",
+      text: normalized.items.map((item) => `- ${item}`).join("\n"),
+    };
+  }
+
+  return {
+    typeLabel: "slider",
+    text: [
+      `value: ${normalized.value}`,
+      `min: ${normalized.min}`,
+      `max: ${normalized.max}`,
+      `step: ${normalized.step}`,
+    ].join("\n"),
+  };
 }
 
 function parseSuggestions(raw: string): SuggestionPatch[] {
@@ -45,39 +157,34 @@ function parseSuggestions(raw: string): SuggestionPatch[] {
       .map((s): SuggestionPatch | null => {
         if (typeof s !== "object" || s == null) return null;
 
-        const rawCardId = s.cardId;
+        const rawCardId = (s as any).cardId;
         const cardId =
           typeof rawCardId === "string" || rawCardId === null
             ? rawCardId
             : null;
 
-        const rawTitle = s.title;
+        const rawTitle = (s as any).title;
         const title =
           typeof rawTitle === "string" && rawTitle.trim().length > 0
             ? rawTitle.trim()
             : undefined;
 
-        const rawContent = s.content;
-        const contentArray = Array.isArray(rawContent)
-          ? rawContent
-              .map((line: unknown) =>
-                typeof line === "string" ? line.trim() : "",
-              )
-              .filter((line: string) => line.length > 0)
-          : undefined;
+        const rawContent = (s as any).content as IncomingContent;
+        const content = normalizeCardContent(rawContent);
 
-        const rawIncluded = s.isIncluded;
+        const rawIncluded = (s as any).isIncluded;
         const isIncluded =
           typeof rawIncluded === "boolean" ? rawIncluded : undefined;
 
-        if (!title && (!contentArray || contentArray.length === 0) && isIncluded === undefined) {
+        // 这条 patch 啥都没改就丢掉
+        if (!title && !content && isIncluded === undefined) {
           return null;
         }
 
         return {
           cardId,
           title,
-          content: contentArray,
+          content,
           isIncluded,
         };
       })
@@ -106,30 +213,37 @@ export async function POST(req: Request) {
       return NextResponse.json<SuggestResponse>({ suggestions: [] });
     }
 
+    // 把现有所有卡片转成描述文本给 LLM
     const cardsDescription = cards
       .map((card) => {
         const includedLabel = card.isIncluded ? "included" : "excluded";
-        const contentText =
-          Array.isArray(card.content) && card.content.length > 0
-            ? card.content.join("\n")
-            : "(empty)";
+        const { typeLabel, text } = formatContentForPrompt(card.content);
 
         return [
           `Card ID: ${card.id}`,
           `Title: ${card.title || "(Untitled)"}`,
           `Status: ${includedLabel}`,
+          `Content type: ${typeLabel}`,
           `Content:`,
-          contentText,
+          text,
         ].join("\n");
       })
       .join("\n\n---\n\n");
 
+    // 🔑 prompt：告诉模型现在有 bullet / slider 两种类型，以及输出 JSON 的格式
     const instruction = [
       "You are helping a user design structured prompt cards for an LLM.",
-      "Each card has a title and content. The user clicked `Suggest` on one specific FOCUS card.",
+      "Each card has a title and content. Content is one of two types:",
+      '- BULLET: { "type": "bullet", "items": ["item 1", "item 2", ...] }',
+      '- SLIDER: { "type": "slider", "value": 200, "min": 100, "max": 300, "step": 10 }',
+      "",
+      "The user clicked `Suggest` on one specific FOCUS card.",
       "",
       "Your job:",
       "- Improve the FOCUS card's content (make it clearer, more specific, more actionable).",
+      "- Keep the FOCUS card's content type sensible:",
+      "  * Use BULLET for lists of tones, restrictions, style guidelines, etc.",
+      "  * Use SLIDER for numeric ranges such as length, number of items, score thresholds, etc.",
       "- Optionally adjust other existing cards if they obviously conflict or can be improved.",
       "- Optionally propose up to 3 NEW cards for helpful dimensions such as:",
       "  Tone, Length, Restriction, Audience, Structure, Style, Examples, etc.",
@@ -137,17 +251,31 @@ export async function POST(req: Request) {
       "VERY IMPORTANT OUTPUT FORMAT:",
       "- You MUST output a single valid JSON object with this shape:",
       '  { "suggestions": [',
-      '      {',
+      "      {",
       '        "cardId": "existing-card-id-or-null",',
       '        "title": "Optional new title",',
-      '        "content": ["line 1", "line 2", "..."],',
+      '        "content": {',
+      '          "type": "bullet",',
+      '          "items": ["item 1", "item 2"]',
+      "        },",
       '        "isIncluded": true',
       "      },",
-      "      ...",
+      "      {",
+      '        "cardId": "existing-card-id-or-null",',
+      '        "title": "Optional new title",',
+      '        "content": {',
+      '          "type": "slider",',
+      '          "value": 200,',
+      '          "min": 100,',
+      '          "max": 300,',
+      '          "step": 10',
+      "        },",
+      '        "isIncluded": false',
+      "      }",
       "    ]",
       "  }",
       "- For EXISTING cards: use their cardId string.",
-      "- For NEW cards: set cardId to null and ALWAYS provide a title and content.",
+      "- For NEW cards: set cardId to null and ALWAYS provide a title and a content object.",
       "- Omit fields you don't change (e.g., if you don't change title, you can skip it).",
       "- Do NOT wrap JSON in markdown code fences.",
       "- Do NOT add any explanations outside the JSON.",

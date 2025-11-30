@@ -130,7 +130,7 @@ export function PromptCard({
         throw new Error(`Summarize request failed with ${response.status}`);
       }
 
-      const { summary } = (await response.json()) as { summary?: CardContent };
+      const { summary } = (await response.json()) as { summary?: PromptCardContent };
       if (!summary) return;
 
       onUpdate?.(id, { title: sourceTitle, content: summary });
@@ -141,7 +141,7 @@ export function PromptCard({
 
       onSummarySnapshotChange?.(id, {
         previousTitle: sourceTitle,
-        previousContent: sourceContent,
+        previousContent: sourceContent || { type: "bullet", items: [] },
         summaryContent: summary,
       });
     } catch (error) {
@@ -172,7 +172,7 @@ export function PromptCard({
     if (!content || content.type !== "bullet") return null;
     const hasContent = isEditing ? normalizeContent(editContent).length > 0 : content.items.length > 0;
     const hasSnapshot = !!summarySnapshot;
-    
+
     return (
       <Tooltip>
         <TooltipTrigger asChild>
@@ -252,14 +252,14 @@ export function PromptCard({
       (content.type === "bullet" && summarySnapshot.summaryContent.type === "bullet"
         ? arraysEqual(content.items, summarySnapshot.summaryContent.items)
         : content.type === "slider" && summarySnapshot.summaryContent.type === "slider"
-        ? content.value === summarySnapshot.summaryContent.value
-        : false);
+          ? content.value === summarySnapshot.summaryContent.value
+          : false);
     const previousEqual = content.type === summarySnapshot.previousContent.type &&
       (content.type === "bullet" && summarySnapshot.previousContent.type === "bullet"
         ? arraysEqual(content.items, summarySnapshot.previousContent.items)
         : content.type === "slider" && summarySnapshot.previousContent.type === "slider"
-        ? content.value === summarySnapshot.previousContent.value
-        : false);
+          ? content.value === summarySnapshot.previousContent.value
+          : false);
     if (contentEqual || previousEqual) {
       return;
     }
@@ -401,7 +401,7 @@ export function PromptCard({
           )}
 
           {content?.type === "slider" ? (
-            <div 
+            <div
               className="mt-8 space-y-2"
               onClick={(e) => e.stopPropagation()}
             >
@@ -478,7 +478,7 @@ export function PromptCard({
                         className="w-20 text-sm"
                       />
                     ) : (
-                      <span 
+                      <span
                         className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer hover:text-gray-900 dark:hover:text-gray-100"
                         onClick={(e) => {
                           e.stopPropagation();

@@ -45,6 +45,7 @@ type PromptPanelExport = {
   prompts: {
     id?: string;
     title?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     content?: any;
     isIncluded?: boolean;
   }[];
@@ -128,8 +129,10 @@ export function PromptPanel(props: PromptPanelProps = {}) {
       reader.onload = (e) => {
         try {
           const text = String(e.target?.result ?? "");
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const json = JSON.parse(text) as PromptPanelExport | any;
 
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const rawPrompts: any[] = Array.isArray(json)
             ? json
             : Array.isArray(json.prompts)

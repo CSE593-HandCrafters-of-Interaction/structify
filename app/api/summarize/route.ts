@@ -30,6 +30,7 @@ interface SummarizeResponse {
   summary: CardContent;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function isBulletContent(value: any): value is BulletContent {
   return (
     value &&
@@ -39,6 +40,7 @@ function isBulletContent(value: any): value is BulletContent {
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function isSliderContent(value: any): value is SliderContent {
   return (
     value &&
@@ -67,6 +69,7 @@ function extractBulletItems(content: IncomingContent): string[] {
   return [];
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function extractJsonObject(text: string): any | null {
   try {
     const trimmed = text.trim();
@@ -81,6 +84,7 @@ function extractJsonObject(text: string): any | null {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function normalizeModelOutput(json: any, fallback: BulletContent): CardContent {
   if (!json || typeof json !== "object") {
     return fallback;

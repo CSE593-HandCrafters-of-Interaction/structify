@@ -55,10 +55,11 @@ function normalizeCardContent(raw: IncomingContent): CardContent | undefined {
 
   if (!raw || typeof raw !== "object") return undefined;
 
-  const anyRaw = raw as any;
+  // raw is now guaranteed to be CardContent
+  const cardRaw = raw as CardContent;
 
-  if (anyRaw.type === "bullet") {
-    const rawItems = anyRaw.items;
+  if (cardRaw.type === "bullet") {
+    const rawItems = cardRaw.items;
     if (!Array.isArray(rawItems)) return undefined;
     const items = rawItems
       .map((line: unknown) =>
@@ -69,14 +70,14 @@ function normalizeCardContent(raw: IncomingContent): CardContent | undefined {
     return { type: "bullet", items };
   }
 
-  if (anyRaw.type === "slider") {
+  if (cardRaw.type === "slider") {
     const toNumber = (v: unknown): number | undefined =>
       typeof v === "number" && Number.isFinite(v) ? v : undefined;
 
-    let value = toNumber(anyRaw.value);
-    let min = toNumber(anyRaw.min);
-    let max = toNumber(anyRaw.max);
-    let step = toNumber(anyRaw.step);
+    let value = toNumber(cardRaw.value);
+    let min = toNumber(cardRaw.min);
+    let max = toNumber(cardRaw.max);
+    let step = toNumber(cardRaw.step);
 
     if (min === undefined && max === undefined && value !== undefined) {
       min = Math.max(0, Math.floor(value * 0.5));

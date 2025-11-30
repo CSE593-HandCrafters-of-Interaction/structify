@@ -80,7 +80,7 @@ export function PromptPanel(props: PromptPanelProps = {}) {
   const addPrompt = () => {
     const newPrompt: PromptItem = {
       id: Date.now().toString(),
-      title: "New prompt",
+      title: "",
       content: { type: "bullet", items: [] },
       isEditing: false,
       isIncluded: true,

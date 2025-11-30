@@ -368,12 +368,12 @@ export function PromptCard({
               className="text-sm font-semibold"
             />
           ) : (
-            <h3 className="mb-2 pr-6 font-semibold line-clamp-2">{truncateText(title, 80)}</h3>
+            <h3 className="mb-3 pr-6 font-semibold line-clamp-2">{truncateText(title, 80)}</h3>
           )}
 
           {content?.type === "slider" ? (
             <div 
-              className="space-y-2"
+              className="mb-3 space-y-2"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center gap-3">

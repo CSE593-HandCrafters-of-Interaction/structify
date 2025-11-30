@@ -358,26 +358,46 @@ export function PromptCard({
         </div>
       )}
 
-      {isEditing ? (
-        <div className="space-y-2">
-          <Input
-            value={editTitle}
-            placeholder="Untitled"
-            onChange={(e) => setEditTitle(e.target.value)}
-            className="text-sm font-semibold"
-          />
+      <div className={isEditing ? "space-y-2" : "relative"}>
+        <div onClick={!isEditing ? () => onEditingChange?.(true) : undefined} className={!isEditing ? "cursor-pointer" : undefined}>
+          {isEditing ? (
+            <Input
+              value={editTitle}
+              placeholder="Untitled"
+              onChange={(e) => setEditTitle(e.target.value)}
+              className="text-sm font-semibold"
+            />
+          ) : (
+            <h3 className="mb-2 pr-6 font-semibold line-clamp-2">{truncateText(title, 80)}</h3>
+          )}
+
           {content?.type === "slider" ? (
-            <div className="space-y-2">
+            <div 
+              className="space-y-2"
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="flex items-center gap-3">
                 <Slider
-                  value={[editSliderValue]}
+                  value={isEditing ? [editSliderValue] : [content.value]}
                   min={content.min ?? 0}
                   max={content.max ?? 100}
                   step={content.step ?? 1}
                   onValueChange={(values) => {
                     const newValue = values[0];
-                    setEditSliderValue(newValue);
-                    setEditContent(newValue.toString());
+                    if (isEditing) {
+                      setEditSliderValue(newValue);
+                      setEditContent(newValue.toString());
+                    } else {
+                      const updatedContent: PromptCardContent = {
+                        type: "slider",
+                        value: newValue,
+                        min: content.min,
+                        max: content.max,
+                        step: content.step,
+                        unit: content.unit
+                      };
+                      onUpdate?.(id, { title, content: updatedContent });
+                    }
                   }}
                   className={cn(
                     "flex-1",
@@ -390,23 +410,29 @@ export function PromptCard({
                   )}
                 />
                 <div className="flex items-center gap-1 min-w-[80px]">
-                  <Input
-                    type="number"
-                    value={editContent}
-                    onChange={(e) => {
-                      const newValue = parseFloat(e.target.value) || 0;
-                      const clampedValue = Math.max(
-                        content.min ?? 0,
-                        Math.min(content.max ?? 100, newValue)
-                      );
-                      setEditContent(clampedValue.toString());
-                      setEditSliderValue(clampedValue);
-                    }}
-                    min={content.min ?? 0}
-                    max={content.max ?? 100}
-                    step={content.step ?? 1}
-                    className="w-20 text-sm"
-                  />
+                  {isEditing ? (
+                    <Input
+                      type="number"
+                      value={editContent}
+                      onChange={(e) => {
+                        const newValue = parseFloat(e.target.value) || 0;
+                        const clampedValue = Math.max(
+                          content.min ?? 0,
+                          Math.min(content.max ?? 100, newValue)
+                        );
+                        setEditContent(clampedValue.toString());
+                        setEditSliderValue(clampedValue);
+                      }}
+                      min={content.min ?? 0}
+                      max={content.max ?? 100}
+                      step={content.step ?? 1}
+                      className="w-20 text-sm"
+                    />
+                  ) : (
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {content.value}
+                    </span>
+                  )}
                   {content.unit && (
                     <span className="text-sm text-gray-600 dark:text-gray-400">{content.unit}</span>
                   )}
@@ -415,71 +441,19 @@ export function PromptCard({
               <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                 {content.min !== undefined && <span>Min: {content.min}</span>}
                 {content.max !== undefined && <span>Max: {content.max}</span>}
-                {content.step !== undefined && <span>Step: {content.step}</span>}
+                {isEditing && content.step !== undefined && <span>Step: {content.step}</span>}
               </div>
             </div>
-          ) : (
-            <Textarea
-              ref={textareaRef}
-              value={editContent}
-              onChange={(e) => setEditContent(e.target.value)}
-              rows={1}
-              className="text-sm resize-none overflow-hidden min-h-0"
-            />
-          )}
-          <div className="flex flex-wrap items-center gap-2">
-            {renderSummarizeUndoButton()}
-            {renderSuggestButton()}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  type="button"
-                  onClick={handleDone}
-                  className="ml-auto h-auto rounded-full bg-yellow-400 px-3 py-1 text-sm text-yellow-950 hover:bg-yellow-500"
-                >
-                  <Check className="size-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">
-                Done
-              </TooltipContent>
-            </Tooltip>
-          </div>
-        </div>
-      ) : (
-        <div className="relative">
-          <div onClick={() => onEditingChange?.(true)} className="cursor-pointer">
-            <h3 className="mb-2 pr-6 font-semibold line-clamp-2">{truncateText(title, 80)}</h3>
-            {content?.type === "slider" ? (
-              <div className="space-y-2">
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 h-2 bg-gray-200 rounded-lg dark:bg-gray-700 relative">
-                    <div
-                      className="h-2 bg-yellow-400 rounded-lg dark:bg-yellow-600"
-                      style={{
-                        width: `${content.min !== undefined && content.max !== undefined
-                          ? ((content.value - content.min) / (content.max - content.min)) * 100
-                          : 0}%`
-                      }}
-                    />
-                  </div>
-                  <div className="flex items-center gap-1 min-w-[80px]">
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      {content.value}
-                    </span>
-                    {content.unit && (
-                      <span className="text-sm text-gray-600 dark:text-gray-400">{content.unit}</span>
-                    )}
-                  </div>
-                </div>
-                {(content.min !== undefined || content.max !== undefined) && (
-                  <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                    {content.min !== undefined && <span>Min: {content.min}</span>}
-                    {content.max !== undefined && <span>Max: {content.max}</span>}
-                  </div>
-                )}
-              </div>
-            ) : content?.type === "bullet" && content.items.length > 0 ? (
+          ) : content?.type === "bullet" ? (
+            isEditing ? (
+              <Textarea
+                ref={textareaRef}
+                value={editContent}
+                onChange={(e) => setEditContent(e.target.value)}
+                rows={1}
+                className="text-sm resize-none overflow-hidden min-h-0"
+              />
+            ) : content.items.length > 0 ? (
               content.items.length === 1 ? (
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   {content.items[0]}
@@ -494,28 +468,55 @@ export function PromptCard({
                   )}
                 </ul>
               )
-            ) : null}
-          </div>
-          <div className="mt-3 flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              {renderSummarizeUndoButton("px-3")}
-              {renderSuggestButton("px-3")}
-            </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={(e) => {
-                e.stopPropagation();
-                onEditingChange?.(true);
-              }}
-              className="size-8 rounded-full border border-yellow-600 text-yellow-700 hover:bg-yellow-100 dark:border-yellow-600 dark:text-yellow-200 dark:hover:bg-yellow-900"
-            >
-              <Pencil className="size-4 text-yellow-600" />
-            </Button>
-          </div>
+            ) : null
+          ) : null}
         </div>
-      )}
+
+        <div className={cn(
+          "flex items-center gap-2",
+          isEditing ? "flex-wrap" : "mt-3 justify-between"
+        )}>
+          {isEditing ? (
+            <>
+              {renderSummarizeUndoButton()}
+              {renderSuggestButton()}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    onClick={handleDone}
+                    className="ml-auto h-auto rounded-full bg-yellow-400 px-3 py-1 text-sm text-yellow-950 hover:bg-yellow-500"
+                  >
+                    <Check className="size-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  Done
+                </TooltipContent>
+              </Tooltip>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center gap-2">
+                {renderSummarizeUndoButton("px-3")}
+                {renderSuggestButton("px-3")}
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEditingChange?.(true);
+                }}
+                className="size-8 rounded-full border border-yellow-600 text-yellow-700 hover:bg-yellow-100 dark:border-yellow-600 dark:text-yellow-200 dark:hover:bg-yellow-900"
+              >
+                <Pencil className="size-4 text-yellow-600" />
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

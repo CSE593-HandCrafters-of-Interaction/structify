@@ -42,10 +42,13 @@
   {
     "id": "4",
     "title": "Tone",
-    "content": [
-      "Grave",
-      "Sincere"
-    ],
+    "content": {
+      "type": "bullet",
+      "items": [
+        "Grave",
+        "Sincere"
+      ]
+    },
     "isEditing": false,
     "isIncluded": true
   }

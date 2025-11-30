@@ -376,71 +376,69 @@ export function PromptCard({
               className="mt-8 space-y-2"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center gap-3">
-                <div className="flex-1 flex flex-col">
-                  <Slider
-                    value={isEditing ? [editSliderValue] : [content.value]}
-                    min={content.min ?? 0}
-                    max={content.max ?? 100}
-                    step={content.step ?? 1}
-                    onValueChange={(values) => {
-                      const newValue = values[0];
-                      if (isEditing) {
-                        setEditSliderValue(newValue);
-                        setEditContent(newValue.toString());
-                      } else {
-                        const updatedContent: PromptCardContent = {
-                          type: "slider",
-                          value: newValue,
-                          min: content.min,
-                          max: content.max,
-                          step: content.step,
-                          unit: content.unit
-                        };
-                        onUpdate?.(id, { title, content: updatedContent });
-                      }
-                    }}
-                    className={cn(
-                      "**:data-[slot=slider-track]:bg-gray-200",
-                      "**:data-[slot=slider-track]:dark:bg-gray-700",
-                      "**:data-[slot=slider-range]:bg-yellow-400",
-                      "**:data-[slot=slider-range]:dark:bg-yellow-600",
-                      "**:data-[slot=slider-thumb]:border-yellow-400",
-                      "**:data-[slot=slider-thumb]:dark:border-yellow-600"
+              <div className="flex flex-col">
+                <Slider
+                  value={isEditing ? [editSliderValue] : [content.value]}
+                  min={content.min ?? 0}
+                  max={content.max ?? 100}
+                  step={content.step ?? 1}
+                  onValueChange={(values) => {
+                    const newValue = values[0];
+                    if (isEditing) {
+                      setEditSliderValue(newValue);
+                      setEditContent(newValue.toString());
+                    } else {
+                      const updatedContent: PromptCardContent = {
+                        type: "slider",
+                        value: newValue,
+                        min: content.min,
+                        max: content.max,
+                        step: content.step,
+                        unit: content.unit
+                      };
+                      onUpdate?.(id, { title, content: updatedContent });
+                    }
+                  }}
+                  className={cn(
+                    "**:data-[slot=slider-track]:bg-gray-200",
+                    "**:data-[slot=slider-track]:dark:bg-gray-700",
+                    "**:data-[slot=slider-range]:bg-yellow-400",
+                    "**:data-[slot=slider-range]:dark:bg-yellow-600",
+                    "**:data-[slot=slider-thumb]:border-yellow-400",
+                    "**:data-[slot=slider-thumb]:dark:border-yellow-600"
+                  )}
+                />
+                <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  <span>{content.min ?? 0}</span>
+                  <div className="flex items-center gap-1">
+                    {isEditing ? (
+                      <Input
+                        type="number"
+                        value={editContent}
+                        onChange={(e) => {
+                          const newValue = parseFloat(e.target.value) || 0;
+                          const clampedValue = Math.max(
+                            content.min ?? 0,
+                            Math.min(content.max ?? 100, newValue)
+                          );
+                          setEditContent(clampedValue.toString());
+                          setEditSliderValue(clampedValue);
+                        }}
+                        min={content.min ?? 0}
+                        max={content.max ?? 100}
+                        step={content.step ?? 1}
+                        className="w-20 text-sm"
+                      />
+                    ) : (
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {content.value}
+                      </span>
                     )}
-                  />
-                  <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    <span>{content.min ?? 0}</span>
-                    <span>{content.max ?? 100}</span>
+                    {content.unit && (
+                      <span className="text-sm text-gray-600 dark:text-gray-400">{content.unit}</span>
+                    )}
                   </div>
-                </div>
-                <div className="flex items-center gap-1 min-w-[80px]">
-                  {isEditing ? (
-                    <Input
-                      type="number"
-                      value={editContent}
-                      onChange={(e) => {
-                        const newValue = parseFloat(e.target.value) || 0;
-                        const clampedValue = Math.max(
-                          content.min ?? 0,
-                          Math.min(content.max ?? 100, newValue)
-                        );
-                        setEditContent(clampedValue.toString());
-                        setEditSliderValue(clampedValue);
-                      }}
-                      min={content.min ?? 0}
-                      max={content.max ?? 100}
-                      step={content.step ?? 1}
-                      className="w-20 text-sm"
-                    />
-                  ) : (
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      {content.value}
-                    </span>
-                  )}
-                  {content.unit && (
-                    <span className="text-sm text-gray-600 dark:text-gray-400">{content.unit}</span>
-                  )}
+                  <span>{content.max ?? 100}</span>
                 </div>
               </div>
               {isEditing && content.step !== undefined && (

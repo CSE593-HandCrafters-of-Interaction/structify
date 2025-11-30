@@ -472,7 +472,13 @@ export function PromptCard({
                         className="w-20 text-sm"
                       />
                     ) : (
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      <span 
+                        className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer hover:text-gray-900 dark:hover:text-gray-100"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEditingChange?.(true);
+                        }}
+                      >
                         {content.value}
                       </span>
                     )}

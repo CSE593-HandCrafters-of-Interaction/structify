@@ -373,7 +373,7 @@ export function PromptCard({
 
           {content?.type === "slider" ? (
             <div 
-              className="mb-3 space-y-2"
+              className="mt-8 space-y-2"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center gap-3">

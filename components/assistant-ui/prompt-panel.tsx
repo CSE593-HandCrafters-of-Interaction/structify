@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
-import { Plus, ArrowLeft, Loader2 } from "lucide-react";
+import { useState, useEffect, useCallback, useRef, ChangeEvent } from "react";
+import { Plus, ArrowLeft, Loader2, Download, Upload } from "lucide-react";
 import { PromptCard } from "./prompt-card";
 import type { SummarySnapshot } from "./prompt-card";
 import { useAssistantApi } from "@assistant-ui/react";
@@ -39,6 +39,16 @@ interface PromptItem {
   summarySnapshot?: SummarySnapshot;
   suggestVersion?: number;
 }
+
+type PromptPanelExport = {
+  version?: number;
+  prompts: {
+    id?: string;
+    title?: string;
+    content?: any;
+    isIncluded?: boolean;
+  }[];
+};
 
 const PANEL_FLOATING = true;
 const PANEL_DEFAULT_WIDTH = 320;
@@ -78,6 +88,127 @@ export function PromptPanel(props: PromptPanelProps = {}) {
   );
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [newlyAddedPromptId, setNewlyAddedPromptId] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleExportPrompts = useCallback(() => {
+    const exportData: PromptPanelExport = {
+      version: 1,
+      prompts: prompts.map((p) => ({
+        id: p.id,
+        title: p.title,
+        content: p.content,
+        isIncluded: p.isIncluded,
+      })),
+    };
+
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    const date = new Date().toISOString().slice(0, 10);
+    a.download = `structured-prompts-${date}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, [prompts]);
+
+  const handleUploadClick = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleImportPrompts = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const text = String(e.target?.result ?? "");
+          const json = JSON.parse(text) as PromptPanelExport | any;
+
+          const rawPrompts: any[] = Array.isArray(json)
+            ? json
+            : Array.isArray(json.prompts)
+            ? json.prompts
+            : [];
+
+          if (!rawPrompts.length) {
+            console.error("Imported file has no prompts");
+            alert("Invalid structured prompts file (no prompts found).");
+            return;
+          }
+
+          const timestamp = Date.now();
+          const normalized: PromptItem[] = rawPrompts.map((raw, index) => {
+            const id =
+              typeof raw.id === "string" && raw.id.length > 0
+                ? raw.id
+                : `${timestamp}-${index}`;
+            const title =
+              typeof raw.title === "string" ? raw.title : "";
+
+            const c = raw.content;
+            let content: PromptCardContent;
+
+            if (c && typeof c === "object" && c.type === "slider") {
+              const value = Number(c.value) || 0;
+              const min = Number(c.min) || 0;
+              const max = Number(c.max) || value || min;
+              const step =
+                typeof c.step === "number" && c.step > 0
+                  ? c.step
+                  : undefined;
+              content = {
+                type: "slider",
+                value,
+                min,
+                max,
+                ...(step !== undefined ? { step } : {}),
+              };
+            } else if (c && typeof c === "object" && c.type === "bullet") {
+              const items = Array.isArray(c.items)
+                ? c.items.map((x: unknown) => String(x))
+                : [];
+              content = { type: "bullet", items };
+            } else if (Array.isArray(c)) {
+              const items = c.map((x) => String(x));
+              content = { type: "bullet", items };
+            } else {
+              content = { type: "bullet", items: [] };
+            }
+
+            const isIncluded =
+              typeof raw.isIncluded === "boolean" ? raw.isIncluded : true;
+
+            return {
+              id,
+              title,
+              content,
+              isIncluded,
+              isEditing: false,
+              summarySnapshot: undefined,
+              suggestVersion: 0,
+            };
+          });
+
+          setPrompts(normalized);
+          setIsOpen(true);
+        } catch (err) {
+          console.error("Failed to import prompts:", err);
+          alert("Failed to import structured prompts. Please check the file format.");
+        } finally {
+          event.target.value = "";
+        }
+      };
+
+      reader.readAsText(file);
+    },
+    [setPrompts, setIsOpen],
+  );
 
   const addPrompt = () => {
     const newPrompt: PromptItem = {
@@ -374,6 +505,13 @@ Generate your response and follow all instructions above.`;
 
   return (
     <>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="application/json"
+        className="hidden"
+        onChange={handleImportPrompts}
+      />
       <PanelExpandTrigger
         isOpen={isOpen}
         onOpen={() => setIsOpen(true)}
@@ -405,6 +543,29 @@ Generate your response and follow all instructions above.`;
                 >
                   <span className="rounded-md px-3 py-1 text-xl">Structured Prompts</span>
                 </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem className="ml-auto flex gap-1">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  title="Download structured prompts"
+                  onClick={handleExportPrompts}
+                  className="h-8 w-8 rounded-full"
+                >
+                  <Download className="h-4 w-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  title="Upload structured prompts"
+                  onClick={handleUploadClick}
+                  className="h-8 w-8 rounded-full"
+                >
+                  <Upload className="h-4 w-4" />
+                </Button>
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarHeader>
@@ -455,4 +616,5 @@ Generate your response and follow all instructions above.`;
     </>
   );
 }
+
 

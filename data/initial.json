@@ -2,30 +2,51 @@
   {
     "id": "1",
     "title": "Goal",
-    "content": ["Write a letter to your friend who recently lost their cat"],
+    "content": {
+      "type": "bullet",
+      "items": [
+        "Write a letter to your friend who recently lost their cat"
+      ]
+    },
     "isEditing": false,
     "isIncluded": true
   },
   {
     "id": "2",
     "title": "Restriction",
-    "content": ["Be kind", "Be thoughtful", "Not awkward", "Not condescending"],
+    "content": {
+      "type": "bullet",
+      "items": [
+        "Be kind",
+        "Be thoughtful",
+        "Not awkward",
+        "Not condescending"
+      ]
+    },
     "isEditing": false,
     "isIncluded": true
   },
   {
     "id": "3",
     "title": "Length",
-    "content": ["~200 words"],
+    "content": {
+      "type": "slider",
+      "value": 200,
+      "min": 100,
+      "max": 300,
+      "step": 10
+    },
     "isEditing": false,
     "isIncluded": true
   },
   {
     "id": "4",
     "title": "Tone",
-    "content": ["Grave", "Sincere"],
+    "content": [
+      "Grave",
+      "Sincere"
+    ],
     "isEditing": false,
     "isIncluded": true
   }
 ]
-

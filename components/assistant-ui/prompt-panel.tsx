@@ -28,7 +28,7 @@ interface PromptPanelProps {
 
 export type PromptCardContent =
   | { type: "bullet"; items: string[] }
-  | { type: "slider"; value: number; min?: number; max?: number; step?: number };
+  | { type: "slider"; value: number; unit?: string, min?: number; max?: number; step?: number };
 
 interface PromptItem {
   id: string;
@@ -60,23 +60,6 @@ const getPanelMaxWidth = (isMobile: boolean) => {
 const clampPanelWidth = (value: number, maxWidth: number) =>
   Math.min(Math.max(value, PANEL_MIN_WIDTH), maxWidth);
 
-// Helper to convert legacy string[] to PromptCardContent
-const toPromptCardContent = (content: string[] | PromptCardContent): PromptCardContent => {
-  if (Array.isArray(content)) {
-    return { type: "bullet", items: content };
-  }
-  return content;
-};
-
-// Helper to convert PromptCardContent to string[] for backward compatibility
-const fromPromptCardContent = (content: PromptCardContent): string[] => {
-  if (content.type === "bullet") {
-    return content.items;
-  }
-  // For slider, return empty array or convert to string representation
-  return [];
-};
-
 export function PromptPanel(props: PromptPanelProps = {}) {
   const { onWidthChange } = props;
   const isMobile = useIsMobile();
@@ -91,10 +74,7 @@ export function PromptPanel(props: PromptPanelProps = {}) {
   const api = useAssistantApi();
   const threadRuntime = api.thread();
   const [prompts, setPrompts] = useState<PromptItem[]>(() =>
-    (initialPrompts as Array<{ id: string; title: string; content: string[]; isEditing?: boolean; isIncluded: boolean }>).map(p => ({
-      ...p,
-      content: toPromptCardContent(p.content)
-    }))
+    (initialPrompts as PromptItem[])
   );
 
   const addPrompt = () => {
@@ -112,8 +92,13 @@ export function PromptPanel(props: PromptPanelProps = {}) {
     setPrompts(prevPrompts => prevPrompts.filter(p => p.id !== id));
   };
 
-  const updatePrompt = useCallback((id: string, data: { title: string; content: PromptCardContent | string[] }) => {
-    setPrompts(prevPrompts => prevPrompts.map(p => p.id === id ? { ...p, ...data, content: toPromptCardContent(data.content) } : p));
+  const updatePrompt = useCallback((id: string, data: { title: string; content: PromptCardContent }) => {
+    setPrompts(prevPrompts => prevPrompts.map(p => {
+      if (p.id === id) {
+        return { ...p, title: data.title, content: data.content };
+      }
+      return p;
+    }));
   }, []);
 
   const updateSummarySnapshot = useCallback((id: string, snapshot?: SummarySnapshot) => {
@@ -151,7 +136,7 @@ export function PromptPanel(props: PromptPanelProps = {}) {
             cards: prompts.map((p) => ({
               id: p.id,
               title: p.title,
-              content: fromPromptCardContent(p.content),
+              content: p.content.type === "bullet" ? p.content.items : [],
               isIncluded: p.isIncluded,
             })),
             focusCardId: focusId,
@@ -186,16 +171,16 @@ export function PromptPanel(props: PromptPanelProps = {}) {
             const s = updates.find((u) => u.cardId === p.id);
             if (!s) return p;
 
+            const content: PromptCardContent = s.content !== undefined
+              ? (Array.isArray(s.content) ? { type: "bullet" as const, items: s.content } : s.content)
+              : p.content;
             return {
               ...p,
               title:
                 typeof s.title === "string" && s.title.length > 0
                   ? s.title
                   : p.title,
-              content:
-                s.content !== undefined
-                  ? toPromptCardContent(s.content)
-                  : p.content,
+              content,
               isIncluded:
                 typeof s.isIncluded === "boolean"
                   ? s.isIncluded
@@ -214,7 +199,7 @@ export function PromptPanel(props: PromptPanelProps = {}) {
             const newItems: PromptItem[] = creations.map((c, index) => ({
               id: `${timestamp}-${index}`,
               title: c.title || "New Card",
-              content: c.content !== undefined ? toPromptCardContent(c.content) : { type: "bullet", items: [] },
+              content: c.content !== undefined ? (Array.isArray(c.content) ? { type: "bullet", items: c.content } : c.content) : { type: "bullet", items: [] },
               isIncluded:
                 typeof c.isIncluded === "boolean" ? c.isIncluded : true,
               isEditing: true,
@@ -267,7 +252,8 @@ Do not repeat or restate the instructions unless explicitly asked.
           message += "  - " + item + "\n";
         });
       } else if (prompt.content.type === "slider") {
-        message += "  - " + prompt.content.value + "\n";
+        const sliderValue = prompt.content.value + (prompt.content.unit ? ` ${prompt.content.unit}` : "");
+        message += "  - " + sliderValue + "\n";
       }
       message += "\n";
     });
@@ -327,7 +313,7 @@ Generate your response and follow all instructions above.`;
         {
           id: `${detail.messageId}-${Date.now()}`,
           title: detail.title,
-          content: toPromptCardContent(detail.content),
+          content: { type: "bullet", items: detail.content },
           isEditing: false,
           isIncluded: true,
         },
@@ -393,7 +379,7 @@ Generate your response and follow all instructions above.`;
                 key={prompt.id}
                 id={prompt.id}
                 title={prompt.title}
-                content={fromPromptCardContent(prompt.content)}
+                content={prompt.content}
                 isEditing={prompt.isEditing}
                 onDelete={deletePrompt}
                 onUpdate={updatePrompt}

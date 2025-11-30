@@ -8,19 +8,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { PromptCardContent } from "./prompt-panel";
 
 export interface SummarySnapshot {
   previousTitle: string;
-  previousContent: string[];
-  summaryContent: string[];
+  previousContent: PromptCardContent;
+  summaryContent: PromptCardContent;
 }
 
 interface PromptCardProps {
   id: string;
   title: string;
-  content?: string[];
+  content?: PromptCardContent;
   onDelete?: (id: string) => void;
-  onUpdate?: (id: string, data: { title: string; content: string[] }) => void;
+  onUpdate?: (id: string, data: { title: string; content: PromptCardContent }) => void;
   isEditing?: boolean;
   onEditingChange?: (isEditing: boolean) => void;
   isIncluded: boolean;
@@ -35,7 +36,7 @@ interface PromptCardProps {
 export function PromptCard({
   id,
   title,
-  content = [],
+  content,
   onDelete,
   onUpdate,
   isEditing = false,
@@ -49,7 +50,12 @@ export function PromptCard({
   onSummarySnapshotChange
 }: PromptCardProps) {
   const [editTitle, setEditTitle] = useState(title);
-  const [editContent, setEditContent] = useState(content.join("\n"));
+  const [editContent, setEditContent] = useState(
+    content?.type === "bullet" ? content.items.join("\n") : content?.type === "slider" ? content.value.toString() : ""
+  );
+  const [editSliderValue, setEditSliderValue] = useState(
+    content?.type === "slider" ? content.value : 0
+  );
   const [isSummarizing, setIsSummarizing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const autoSaveReadyRef = useRef(false);
@@ -57,7 +63,12 @@ export function PromptCard({
   useEffect(() => {
     if (suggestVersion == null) return;
     setEditTitle(title);
-    setEditContent(content.join("\n"));
+    if (content?.type === "bullet") {
+      setEditContent(content.items.join("\n"));
+    } else if (content?.type === "slider") {
+      setEditContent(content.value.toString());
+      setEditSliderValue(content.value);
+    }
   }, [suggestVersion, title, content]);
 
   useLayoutEffect(() => {
@@ -79,7 +90,8 @@ export function PromptCard({
     a.length === b.length && a.every((value, index) => value === b[index]);
 
   const handleSummarize = async () => {
-    const sourceContent = isEditing ? normalizeContent(editContent) : content;
+    if (!content || content.type !== "bullet") return;
+    const sourceContent = isEditing ? normalizeContent(editContent) : content.items;
     if (sourceContent.length === 0 || isSummarizing) return;
     const sourceTitle = isEditing ? editTitle : title;
 
@@ -106,12 +118,13 @@ export function PromptCard({
       const summaryLines = normalizeContent(summary);
       if (summaryLines.length === 0) return;
 
-      onUpdate?.(id, { title: sourceTitle, content: summaryLines });
+      const newContent: PromptCardContent = { type: "bullet", items: summaryLines };
+      onUpdate?.(id, { title: sourceTitle, content: newContent });
       setEditContent(summaryLines.join("\n"));
       onSummarySnapshotChange?.(id, {
         previousTitle: sourceTitle,
-        previousContent: sourceContent,
-        summaryContent: summaryLines
+        previousContent: content,
+        summaryContent: newContent
       });
     } catch (error) {
       console.error("Failed to summarize prompt card:", error);
@@ -126,13 +139,19 @@ export function PromptCard({
     const { previousTitle, previousContent } = summarySnapshot;
     onUpdate?.(id, { title: previousTitle, content: previousContent });
     setEditTitle(previousTitle);
-    setEditContent(previousContent.join("\n"));
+    if (previousContent.type === "bullet") {
+      setEditContent(previousContent.items.join("\n"));
+    } else if (previousContent.type === "slider") {
+      setEditContent(previousContent.value.toString());
+      setEditSliderValue(previousContent.value);
+    }
     onSummarySnapshotChange?.(id);
   };
 
   const renderSummarizeUndoButton = (className?: string) => {
     if (!isEditing) return null;
-    const hasContent = isEditing ? normalizeContent(editContent).length > 0 : content.length > 0;
+    if (!content || content.type !== "bullet") return null;
+    const hasContent = isEditing ? normalizeContent(editContent).length > 0 : content.items.length > 0;
     const hasSnapshot = !!summarySnapshot;
     
     return (
@@ -209,11 +228,20 @@ export function PromptCard({
   };
 
   useEffect(() => {
-    if (!summarySnapshot) return;
-    if (
-      arraysEqual(content, summarySnapshot.summaryContent) ||
-      arraysEqual(content, summarySnapshot.previousContent)
-    ) {
+    if (!summarySnapshot || !content) return;
+    const contentEqual = content.type === summarySnapshot.summaryContent.type &&
+      (content.type === "bullet" && summarySnapshot.summaryContent.type === "bullet"
+        ? arraysEqual(content.items, summarySnapshot.summaryContent.items)
+        : content.type === "slider" && summarySnapshot.summaryContent.type === "slider"
+        ? content.value === summarySnapshot.summaryContent.value
+        : false);
+    const previousEqual = content.type === summarySnapshot.previousContent.type &&
+      (content.type === "bullet" && summarySnapshot.previousContent.type === "bullet"
+        ? arraysEqual(content.items, summarySnapshot.previousContent.items)
+        : content.type === "slider" && summarySnapshot.previousContent.type === "slider"
+        ? content.value === summarySnapshot.previousContent.value
+        : false);
+    if (contentEqual || previousEqual) {
       return;
     }
     onSummarySnapshotChange?.(id);
@@ -230,16 +258,35 @@ export function PromptCard({
       return;
     }
 
-    const nextContent = editContent
-      .split("\n")
-      .map(line => line.trim())
-      .filter(Boolean);
-
-    onUpdate?.(id, {
-      title: editTitle,
-      content: nextContent
-    });
-  }, [editTitle, editContent, id, isEditing, onUpdate]);
+    if (content?.type === "bullet") {
+      const nextContent: PromptCardContent = {
+        type: "bullet",
+        items: editContent
+          .split("\n")
+          .map((line: string) => line.trim())
+          .filter(Boolean)
+      };
+      onUpdate?.(id, {
+        title: editTitle,
+        content: nextContent
+      });
+    } else if (content?.type === "slider") {
+      const numValue = parseFloat(editContent) || editSliderValue;
+      const nextContent: PromptCardContent = {
+        type: "slider",
+        value: numValue,
+        min: content.min,
+        max: content.max,
+        step: content.step,
+        unit: content.unit
+      };
+      onUpdate?.(id, {
+        title: editTitle,
+        content: nextContent
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editTitle, editContent, editSliderValue, id, isEditing, onUpdate]);
 
   const handleDone = () => {
     onEditingChange?.(false);
@@ -318,13 +365,60 @@ export function PromptCard({
             onChange={(e) => setEditTitle(e.target.value)}
             className="text-sm font-semibold"
           />
-          <Textarea
-            ref={textareaRef}
-            value={editContent}
-            onChange={(e) => setEditContent(e.target.value)}
-            rows={1}
-            className="text-sm resize-none overflow-hidden min-h-0"
-          />
+          {content?.type === "slider" ? (
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                <input
+                  type="range"
+                  min={content.min ?? 0}
+                  max={content.max ?? 100}
+                  step={content.step ?? 1}
+                  value={editSliderValue}
+                  onChange={(e) => {
+                    const newValue = parseFloat(e.target.value);
+                    setEditSliderValue(newValue);
+                    setEditContent(newValue.toString());
+                  }}
+                  className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                />
+                <div className="flex items-center gap-1 min-w-[80px]">
+                  <Input
+                    type="number"
+                    value={editContent}
+                    onChange={(e) => {
+                      const newValue = parseFloat(e.target.value) || 0;
+                      const clampedValue = Math.max(
+                        content.min ?? 0,
+                        Math.min(content.max ?? 100, newValue)
+                      );
+                      setEditContent(clampedValue.toString());
+                      setEditSliderValue(clampedValue);
+                    }}
+                    min={content.min ?? 0}
+                    max={content.max ?? 100}
+                    step={content.step ?? 1}
+                    className="w-20 text-sm"
+                  />
+                  {content.unit && (
+                    <span className="text-sm text-gray-600 dark:text-gray-400">{content.unit}</span>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                {content.min !== undefined && <span>Min: {content.min}</span>}
+                {content.max !== undefined && <span>Max: {content.max}</span>}
+                {content.step !== undefined && <span>Step: {content.step}</span>}
+              </div>
+            </div>
+          ) : (
+            <Textarea
+              ref={textareaRef}
+              value={editContent}
+              onChange={(e) => setEditContent(e.target.value)}
+              rows={1}
+              className="text-sm resize-none overflow-hidden min-h-0"
+            />
+          )}
           <div className="flex flex-wrap items-center gap-2">
             {renderSummarizeUndoButton()}
             {renderSuggestButton()}
@@ -348,22 +442,51 @@ export function PromptCard({
         <div className="relative">
           <div onClick={() => onEditingChange?.(true)} className="cursor-pointer">
             <h3 className="mb-2 pr-6 font-semibold line-clamp-2">{truncateText(title, 80)}</h3>
-            {content.length > 0 && (
-              content.length === 1 ? (
+            {content?.type === "slider" ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 h-2 bg-gray-200 rounded-lg dark:bg-gray-700 relative">
+                    <div
+                      className="h-2 bg-yellow-400 rounded-lg dark:bg-yellow-600"
+                      style={{
+                        width: `${content.min !== undefined && content.max !== undefined
+                          ? ((content.value - content.min) / (content.max - content.min)) * 100
+                          : 0}%`
+                      }}
+                    />
+                  </div>
+                  <div className="flex items-center gap-1 min-w-[80px]">
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {content.value}
+                    </span>
+                    {content.unit && (
+                      <span className="text-sm text-gray-600 dark:text-gray-400">{content.unit}</span>
+                    )}
+                  </div>
+                </div>
+                {(content.min !== undefined || content.max !== undefined) && (
+                  <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                    {content.min !== undefined && <span>Min: {content.min}</span>}
+                    {content.max !== undefined && <span>Max: {content.max}</span>}
+                  </div>
+                )}
+              </div>
+            ) : content?.type === "bullet" && content.items.length > 0 ? (
+              content.items.length === 1 ? (
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {content[0]}
+                  {content.items[0]}
                 </p>
               ) : (
                 <ul className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
-                  {content.slice(0, 5).map((item, idx) => (
+                  {content.items.slice(0, 5).map((item, idx) => (
                     <li key={idx} className="line-clamp-1">• {truncateText(item, 60)}</li>
                   ))}
-                  {content.length > 5 && (
-                    <li className="text-xs italic opacity-60">...and {content.length - 5} more</li>
+                  {content.items.length > 5 && (
+                    <li className="text-xs italic opacity-60">...and {content.items.length - 5} more</li>
                   )}
                 </ul>
               )
-            )}
+            ) : null}
           </div>
           <div className="mt-3 flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">

@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Slider } from "@/components/ui/slider";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { PromptCardContent } from "./prompt-panel";
 
@@ -368,18 +369,25 @@ export function PromptCard({
           {content?.type === "slider" ? (
             <div className="space-y-2">
               <div className="flex items-center gap-3">
-                <input
-                  type="range"
+                <Slider
+                  value={[editSliderValue]}
                   min={content.min ?? 0}
                   max={content.max ?? 100}
                   step={content.step ?? 1}
-                  value={editSliderValue}
-                  onChange={(e) => {
-                    const newValue = parseFloat(e.target.value);
+                  onValueChange={(values) => {
+                    const newValue = values[0];
                     setEditSliderValue(newValue);
                     setEditContent(newValue.toString());
                   }}
-                  className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                  className={cn(
+                    "flex-1",
+                    "**:data-[slot=slider-track]:bg-gray-200",
+                    "**:data-[slot=slider-track]:dark:bg-gray-700",
+                    "**:data-[slot=slider-range]:bg-yellow-400",
+                    "**:data-[slot=slider-range]:dark:bg-yellow-600",
+                    "**:data-[slot=slider-thumb]:border-yellow-400",
+                    "**:data-[slot=slider-thumb]:dark:border-yellow-600"
+                  )}
                 />
                 <div className="flex items-center gap-1 min-w-[80px]">
                   <Input

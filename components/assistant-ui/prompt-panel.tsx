@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Plus, ArrowLeft, Loader2 } from "lucide-react";
 import { PromptCard } from "./prompt-card";
 import type { SummarySnapshot } from "./prompt-card";
@@ -76,6 +76,8 @@ export function PromptPanel(props: PromptPanelProps = {}) {
   const [prompts, setPrompts] = useState<PromptItem[]>(() =>
     (initialPrompts as PromptItem[])
   );
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [newlyAddedPromptId, setNewlyAddedPromptId] = useState<string | null>(null);
 
   const addPrompt = () => {
     const newPrompt: PromptItem = {
@@ -86,6 +88,7 @@ export function PromptPanel(props: PromptPanelProps = {}) {
       isIncluded: true,
     };
     setPrompts([...prompts, newPrompt]);
+    setNewlyAddedPromptId(newPrompt.id);
   };
 
   const deletePrompt = (id: string) => {
@@ -212,6 +215,11 @@ export function PromptPanel(props: PromptPanelProps = {}) {
               ...newItems,
               ...next.slice(insertIndex),
             ];
+
+            // Set the first newly created item as the focus target
+            if (newItems.length > 0) {
+              setNewlyAddedPromptId(newItems[0].id);
+            }
           }
 
           return next;
@@ -307,16 +315,18 @@ Generate your response and follow all instructions above.`;
         return;
       }
 
+      const newPromptId = `${detail.messageId}-${Date.now()}`;
       setPrompts(prevPrompts => [
         ...prevPrompts,
         {
-          id: `${detail.messageId}-${Date.now()}`,
+          id: newPromptId,
           title: detail.title,
           content: { type: "bullet", items: detail.content },
           isEditing: false,
           isIncluded: true,
         },
       ]);
+      setNewlyAddedPromptId(newPromptId);
       setIsOpen(true);
     };
 
@@ -335,6 +345,32 @@ Generate your response and follow all instructions above.`;
       onWidthChange?.(0);
     };
   }, [onWidthChange]);
+
+  // Scroll to newly added prompt card
+  useEffect(() => {
+    if (!newlyAddedPromptId || !scrollContainerRef.current) return;
+
+    // Use setTimeout to ensure DOM has updated
+    const timeoutId = setTimeout(() => {
+      const cardElement = scrollContainerRef.current?.querySelector(
+        `[data-prompt-id="${newlyAddedPromptId}"]`
+      ) as HTMLElement;
+
+      if (cardElement) {
+        // Scroll the card into view with smooth behavior
+        cardElement.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+          inline: "nearest",
+        });
+      }
+
+      // Reset the newly added prompt ID after scrolling
+      setNewlyAddedPromptId(null);
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
+  }, [newlyAddedPromptId]);
 
   return (
     <>
@@ -372,7 +408,7 @@ Generate your response and follow all instructions above.`;
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarHeader>
-          <div className="flex-1 space-y-4 overflow-y-auto">
+          <div ref={scrollContainerRef} className="flex-1 space-y-4 overflow-y-auto">
             {prompts.map((prompt) => (
               <PromptCard
                 key={prompt.id}

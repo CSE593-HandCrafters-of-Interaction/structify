@@ -335,6 +335,7 @@ export function PromptCard({
 
   return (
     <div
+      data-prompt-id={id}
       className={cn(
         "relative rounded-2xl border-2 p-4 transition-colors",
         isIncluded

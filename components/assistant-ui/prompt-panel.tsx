@@ -348,15 +348,15 @@ Generate your response and follow all instructions above.`;
 
   // Scroll to newly added prompt card
   useEffect(() => {
-    if (!newlyAddedPromptId || !scrollContainerRef.current) return;
+    if (!newlyAddedPromptId || !scrollContainerRef.current || !isOpen) return;
 
-    // Use setTimeout to ensure DOM has updated
+    // Use setTimeout to ensure DOM has updated and panel animation has completed
     const timeoutId = setTimeout(() => {
       const cardElement = scrollContainerRef.current?.querySelector(
         `[data-prompt-id="${newlyAddedPromptId}"]`
       ) as HTMLElement;
 
-      if (cardElement) {
+      if (cardElement && scrollContainerRef.current) {
         // Scroll the card into view with smooth behavior
         cardElement.scrollIntoView({
           behavior: "smooth",
@@ -367,10 +367,10 @@ Generate your response and follow all instructions above.`;
 
       // Reset the newly added prompt ID after scrolling
       setNewlyAddedPromptId(null);
-    }, 100);
+    }, 200); // Increased timeout to allow panel animation to complete
 
     return () => clearTimeout(timeoutId);
-  }, [newlyAddedPromptId]);
+  }, [newlyAddedPromptId, isOpen]);
 
   return (
     <>

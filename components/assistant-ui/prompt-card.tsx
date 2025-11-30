@@ -108,9 +108,9 @@ export function PromptCard({
     a.length === b.length && a.every((value, index) => value === b[index]);
 
   const handleSummarize = async () => {
-    if (!content || content.type !== "bullet") return;
-    const sourceContent = isEditing ? normalizeContent(editContent) : content.items;
-    if (sourceContent.length === 0 || isSummarizing) return;
+    if (isSummarizing) return;
+
+    const sourceContent = content;
     const sourceTitle = isEditing ? editTitle : title;
 
     setIsSummarizing(true);
@@ -118,31 +118,31 @@ export function PromptCard({
       const response = await fetch("/api/summarize", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          title: isEditing ? editTitle : title,
-          content: sourceContent
-        })
+          title: sourceTitle,
+          content: sourceContent,
+        }),
       });
 
       if (!response.ok) {
         throw new Error(`Summarize request failed with ${response.status}`);
       }
 
-      const { summary } = await response.json() as { summary?: string };
+      const { summary } = (await response.json()) as { summary?: CardContent };
       if (!summary) return;
 
-      const summaryLines = normalizeContent(summary);
-      if (summaryLines.length === 0) return;
+      onUpdate?.(id, { title: sourceTitle, content: summary });
 
-      const newContent: PromptCardContent = { type: "bullet", items: summaryLines };
-      onUpdate?.(id, { title: sourceTitle, content: newContent });
-      setEditContent(summaryLines.join("\n"));
+      if (summary.type === "bullet") {
+        setEditContent(summary.items.join("\n"));
+      }
+
       onSummarySnapshotChange?.(id, {
         previousTitle: sourceTitle,
-        previousContent: content,
-        summaryContent: newContent
+        previousContent: sourceContent,
+        summaryContent: summary,
       });
     } catch (error) {
       console.error("Failed to summarize prompt card:", error);
@@ -157,14 +157,13 @@ export function PromptCard({
     const { previousTitle, previousContent } = summarySnapshot;
     onUpdate?.(id, { title: previousTitle, content: previousContent });
     setEditTitle(previousTitle);
+
     if (previousContent.type === "bullet") {
       setEditContent(previousContent.items.join("\n"));
-    } else if (previousContent.type === "slider") {
-      setEditContent(previousContent.value.toString());
-      setEditSliderValue(previousContent.value);
-      setEditMin(previousContent.min);
-      setEditMax(previousContent.max);
+    } else {
+      // setEditContent(`${previousContent.value}`);
     }
+
     onSummarySnapshotChange?.(id);
   };
 

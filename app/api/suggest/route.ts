@@ -177,7 +177,6 @@ function parseSuggestions(raw: string): SuggestionPatch[] {
         const isIncluded =
           typeof rawIncluded === "boolean" ? rawIncluded : undefined;
 
-        // 这条 patch 啥都没改就丢掉
         if (!title && !content && isIncluded === undefined) {
           return null;
         }
@@ -214,7 +213,6 @@ export async function POST(req: Request) {
       return NextResponse.json<SuggestResponse>({ suggestions: [] });
     }
 
-    // 把现有所有卡片转成描述文本给 LLM
     const cardsDescription = cards
       .map((card) => {
         const includedLabel = card.isIncluded ? "included" : "excluded";
@@ -231,7 +229,6 @@ export async function POST(req: Request) {
       })
       .join("\n\n---\n\n");
 
-    // 🔑 prompt：告诉模型现在有 bullet / slider 两种类型，以及输出 JSON 的格式
     const instruction = [
       "You are helping a user design structured prompt cards for an LLM.",
       "Each card has a title and content. Content is one of two types:",
@@ -245,7 +242,7 @@ export async function POST(req: Request) {
       "- Keep the FOCUS card's content type sensible:",
       "  * Use BULLET for lists of tones, restrictions, style guidelines, etc.",
       "  * Use SLIDER for numeric ranges such as length, number of items, score thresholds, etc.",
-      "- Optionally adjust other existing cards if they obviously conflict or can be improved.",
+      "- Optionally adjust other existing cards ONLY if they obviously conflict or can be obviously improved.",
       "- Optionally propose up to 3 NEW cards for helpful dimensions such as:",
       "  Tone, Length, Restriction, Audience, Structure, Style, Examples, etc.",
       "",
@@ -283,9 +280,10 @@ export async function POST(req: Request) {
       "",
       "Constraints:",
       "- At least ONE suggestion MUST be for the FOCUS card (rewrite its content).",
+      "- You only modify other existing cards if they obviously conflict or can be obviously improved.",
       "- You may modify at most 5 existing cards.",
       "- You may create at most 3 new cards.",
-      "- Keep the user's language (Chinese or English) consistent with the original.",
+      "- Keep the user's language consistent with the original.",
     ].join("\n");
 
     const focusIntro = [

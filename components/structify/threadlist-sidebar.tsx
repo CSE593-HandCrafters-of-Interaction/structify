@@ -209,37 +209,41 @@ export function ThreadListSidebar({
       </SidebarHeader>
       <SidebarContent className="aui-sidebar-content px-2 gap-0">
         <ThreadList onClearHistory={onClearHistory} />
-        <div className="mt-2 border-t pt-2">
-          <div className="px-3 flex flex-row gap-1.5">
-            <Button
-              onClick={handleCreateNew}
-              variant="ghost"
-              className="flex-1 flex items-center justify-center gap-1 rounded-lg px-2.5 py-2 text-center hover:bg-muted"
-            >
-              <Plus className="size-4" />
-              New
-            </Button>
-            <Button
-              onClick={handleImportClick}
-              variant="ghost"
-              className="flex-1 flex items-center justify-center gap-1 rounded-lg px-2.5 py-2 text-center hover:bg-muted"
-            >
-              <Download className="size-4" />
-              Import
-            </Button>
-          </div>
-        </div>
-        <div className="mt-2 border-t pt-4">
-          <div className="mb-2 px-3 text-xs font-semibold text-muted-foreground uppercase">
-            Saved Prompts
-          </div>
-          <PromptList 
-            onSelectPromptSet={onSelectPromptSet}
-            currentPromptSetId={currentPromptSetId}
-            onClosePanelForEdit={onClosePanelForEdit}
-            onReloadPromptSet={onReloadPromptSet}
-          />
-        </div>
+        {structifyFeature && (
+          <>
+            <div className="mt-2 border-t pt-2">
+              <div className="px-3 flex flex-row gap-1.5">
+                <Button
+                  onClick={handleCreateNew}
+                  variant="ghost"
+                  className="flex-1 flex items-center justify-center gap-1 rounded-lg px-2.5 py-2 text-center hover:bg-muted"
+                >
+                  <Plus className="size-4" />
+                  New
+                </Button>
+                <Button
+                  onClick={handleImportClick}
+                  variant="ghost"
+                  className="flex-1 flex items-center justify-center gap-1 rounded-lg px-2.5 py-2 text-center hover:bg-muted"
+                >
+                  <Download className="size-4" />
+                  Import
+                </Button>
+              </div>
+            </div>
+            <div className="mt-2 border-t pt-4">
+              <div className="mb-2 px-3 text-xs font-semibold text-muted-foreground uppercase">
+                Saved Prompts
+              </div>
+              <PromptList 
+                onSelectPromptSet={onSelectPromptSet}
+                currentPromptSetId={currentPromptSetId}
+                onClosePanelForEdit={onClosePanelForEdit}
+                onReloadPromptSet={onReloadPromptSet}
+              />
+            </div>
+          </>
+        )}
       </SidebarContent>
       <SidebarFooter className="border-t border-sidebar-border">
         <SidebarMenu>

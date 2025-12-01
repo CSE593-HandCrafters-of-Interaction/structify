@@ -87,7 +87,7 @@ export function PromptCard({
       setEditMin(content.min);
       setEditMax(content.max);
     }
-  }, [suggestVersion, title, content]);
+  }, [suggestVersion, title]);
 
   useLayoutEffect(() => {
     const textarea = textareaRef.current;

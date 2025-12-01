@@ -67,9 +67,9 @@ export function ThreadListSidebar({
           <SidebarTrigger className="ml-2 shrink-0" size="icon" />
         </div>
       </SidebarHeader>
-      <SidebarContent className="aui-sidebar-content px-2">
+      <SidebarContent className="aui-sidebar-content px-2 gap-0">
         <ThreadList onClearHistory={onClearHistory} />
-        <div className="mt-4 border-t pt-4">
+        <div className="mt-2 border-t pt-4">
           <div className="mb-2 px-3 text-xs font-semibold text-muted-foreground uppercase">
             Saved Prompts
           </div>

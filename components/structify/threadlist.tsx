@@ -24,7 +24,7 @@ const ThreadListClear: FC<{ onClear: () => void }> = ({ onClear }) => {
       variant="ghost"
     >
       <Trash2Icon className="size-4" />
-      Clear Chat History
+      Nuke Current Chat
     </Button>
   );
 };

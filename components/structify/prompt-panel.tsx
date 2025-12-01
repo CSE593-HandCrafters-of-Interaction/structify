@@ -113,7 +113,7 @@ export function PromptPanel(props: PromptPanelProps = {}) {
     const a = document.createElement("a");
     a.href = url;
     const sanitizedTitle = panelTitle.replace(/[^a-z0-9]/gi, '-').toLowerCase() || 'structured-prompts';
-    a.download = `${sanitizedTitle}.json`;
+    a.download = `${sanitizedTitle}.structify.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

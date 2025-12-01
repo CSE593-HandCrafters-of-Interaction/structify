@@ -7,14 +7,14 @@ import { DefaultChatTransport, type UIMessage } from "ai";
 import { useAISDKRuntime } from "@assistant-ui/react-ai-sdk";
 import cinematicScript from "@/data/cinematic.json";
 import { CinematicProvider } from "@/context/cinematic-context";
-import { Thread } from "@/components/assistant-ui/thread";
+import { Thread } from "@/components/structify/thread";
 import {
   SidebarExpandTrigger,
   SidebarInset,
   SidebarProvider,
 } from "@/components/ui/sidebar";
-import { ThreadListSidebar } from "@/components/assistant-ui/threadlist-sidebar";
-import { PromptPanel } from "@/components/assistant-ui/prompt-panel";
+import { ThreadListSidebar } from "@/components/structify/threadlist-sidebar";
+import { PromptPanel } from "@/components/structify/prompt-panel";
 import { PANEL_SLIDE_DURATION_MS } from "@/components/ui/panel";
 import { useIsMobile } from "@/hooks/use-mobile";
 

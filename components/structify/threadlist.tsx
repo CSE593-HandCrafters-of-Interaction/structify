@@ -8,7 +8,7 @@ import {
 import { ArchiveIcon, PlusIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button";
+import { TooltipIconButton } from "@/components/structify/tooltip-icon-button";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const ThreadList: FC = () => {

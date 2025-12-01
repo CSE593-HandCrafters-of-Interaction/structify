@@ -42,7 +42,7 @@ export function ThreadListSidebar({
   const handleCreateNew = React.useCallback(() => {
     const newPromptSet: PromptSet = {
       id: `prompt-set-${Date.now()}`,
-      title: "New Structured Prompt",
+      title: "New Prompt Set",
       prompts: [],
       createdAt: Date.now(),
       updatedAt: Date.now(),

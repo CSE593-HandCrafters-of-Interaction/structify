@@ -445,12 +445,20 @@ export function PromptCard({
                       onChange={(e) => {
                         const newMin = parseFloat(e.target.value) || 0;
                         setEditMin(newMin);
+                      }}
+                      onBlur={(e) => {
+                        const newMin = parseFloat(e.target.value) || 0;
                         if (editMax <= newMin) {
                           setEditMax(newMin + 1);
                         }
                         if (editSliderValue < newMin) {
                           setEditSliderValue(newMin);
                           setEditContent(newMin.toString());
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.currentTarget.blur();
                         }
                       }}
                       className="w-18 scale-75 origin-left"
@@ -496,12 +504,20 @@ export function PromptCard({
                       onChange={(e) => {
                         const newMax = parseFloat(e.target.value) || 100;
                         setEditMax(newMax);
+                      }}
+                      onBlur={(e) => {
+                        const newMax = parseFloat(e.target.value) || 100;
                         if (editMin >= newMax) {
                           setEditMin(newMax - 1);
                         }
                         if (editSliderValue > newMax) {
                           setEditSliderValue(newMax);
                           setEditContent(newMax.toString());
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.currentTarget.blur();
                         }
                       }}
                       className="w-18 scale-75 origin-right"

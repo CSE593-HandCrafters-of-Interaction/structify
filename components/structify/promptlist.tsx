@@ -35,6 +35,10 @@ export const PromptList: FC<PromptListProps> = ({
 
   const handleDelete = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    // Close the panel if the prompt set being deleted is the one currently open
+    if (id === currentPromptSetId && onClosePanelForEdit) {
+      onClosePanelForEdit();
+    }
     deletePromptSet(id);
     setPromptSets(loadPromptSets());
   };

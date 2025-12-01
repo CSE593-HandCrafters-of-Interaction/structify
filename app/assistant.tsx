@@ -17,6 +17,7 @@ import { ThreadListSidebar } from "@/components/structify/threadlist-sidebar";
 import { PromptPanel } from "@/components/structify/prompt-panel";
 import { PANEL_SLIDE_DURATION_MS } from "@/components/ui/panel";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { loadChatHistory, saveChatHistory } from "@/lib/localStorage-history-adapter";
 
 type AssistantThreadMessage = UIMessage & {
   content: string;
@@ -47,7 +48,29 @@ export const Assistant = () => {
 
   const chat = useChat<AssistantThreadMessage>({
     transport,
+    id: "assistant-chat", // Stable ID for the chat session
   });
+
+  // Load messages from localStorage on mount (only once)
+  const [hasLoadedHistory, setHasLoadedHistory] = useState(false);
+  useEffect(() => {
+    if (typeof window !== "undefined" && !hasLoadedHistory && chat.messages.length === 0) {
+      const savedMessages = loadChatHistory();
+      if (savedMessages && savedMessages.length > 0) {
+        // Cast to AssistantThreadMessage since we know the structure we saved
+        chat.setMessages(savedMessages as AssistantThreadMessage[]);
+      }
+      setHasLoadedHistory(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasLoadedHistory]); // Only run once
+
+  // Save messages to localStorage whenever they change
+  useEffect(() => {
+    if (typeof window !== "undefined" && chat.messages.length > 0) {
+      saveChatHistory(chat.messages);
+    }
+  }, [chat.messages]);
 
   // 3. Runtime creation
   const runtime = useAISDKRuntime(chat);

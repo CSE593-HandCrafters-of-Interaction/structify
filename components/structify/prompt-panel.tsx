@@ -602,7 +602,48 @@ Generate your response and follow all instructions above.`;
   };
 
   const updateEditingState = (id: string, isEditing: boolean) => {
-    setPrompts(prevPrompts => prevPrompts.map(p => p.id === id ? { ...p, isEditing } : p));
+    setPrompts(prevPrompts => {
+      const updatedPrompts = prevPrompts.map(p => p.id === id ? { ...p, isEditing } : p);
+      
+      // Auto-save when finishing editing (isEditing becomes false) and there's a current prompt set
+      // Defer the save to avoid updating another component during render
+      if (!isEditing && currentPromptSetIdRef.current) {
+        const promptSetId = currentPromptSetIdRef.current;
+        setTimeout(() => {
+          const existingPromptSet = loadPromptSets().find(p => p.id === promptSetId);
+          const promptSetToSave: PromptSet = existingPromptSet
+            ? {
+                ...existingPromptSet,
+                title: panelTitleRef.current || "Structured Prompts",
+                prompts: updatedPrompts.map((p) => ({
+                  id: p.id,
+                  title: p.title,
+                  content: p.content,
+                  isIncluded: p.isIncluded,
+                  isEditing: false,
+                })),
+                updatedAt: Date.now(),
+              }
+            : {
+                id: promptSetId,
+                title: panelTitleRef.current || "Structured Prompts",
+                prompts: updatedPrompts.map((p) => ({
+                  id: p.id,
+                  title: p.title,
+                  content: p.content,
+                  isIncluded: p.isIncluded,
+                  isEditing: false,
+                })),
+                createdAt: Date.now(),
+                updatedAt: Date.now(),
+              };
+          savePromptSet(promptSetToSave);
+          window.dispatchEvent(new CustomEvent("prompt-set-saved"));
+        }, 0);
+      }
+      
+      return updatedPrompts;
+    });
   };
 
   const updateIncludeState = (id: string, isIncluded: boolean) => {

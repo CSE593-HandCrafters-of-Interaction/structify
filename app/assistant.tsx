@@ -17,7 +17,7 @@ import { ThreadListSidebar } from "@/components/structify/threadlist-sidebar";
 import { PromptPanel } from "@/components/structify/prompt-panel";
 import { PANEL_SLIDE_DURATION_MS } from "@/components/ui/panel";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { loadChatHistory, saveChatHistory } from "@/lib/localStorage-history-adapter";
+import { loadChatHistory, saveChatHistory, clearChatHistory } from "@/lib/localStorage-history-adapter";
 
 type AssistantThreadMessage = UIMessage & {
   content: string;
@@ -82,6 +82,11 @@ export const Assistant = () => {
     setIsUserStudyMode((prev) => !prev);
     setCinematicIndex(0);
   }, []);
+
+  const handleClearHistory = useCallback(() => {
+    chat.setMessages([]);
+    clearChatHistory();
+  }, [chat]);
 
   const isMobileViewport = useIsMobile();
   const shouldHideSidebarTrigger = isMobileViewport && promptPanelWidth > 0;
@@ -177,6 +182,7 @@ export const Assistant = () => {
               onToggleStructifyFeature={toggleStructifyFeature}
               userStudyMode={isUserStudyMode}
               onToggleUserStudyMode={toggleUserStudyMode}
+              onClearHistory={handleClearHistory}
             />
             <SidebarInset>
               <SidebarExpandTrigger hidden={shouldHideSidebarTrigger} />

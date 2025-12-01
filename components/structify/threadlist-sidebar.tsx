@@ -19,6 +19,7 @@ type ThreadListSidebarProps = React.ComponentProps<typeof Sidebar> & {
   onToggleStructifyFeature: () => void;
   userStudyMode: boolean;
   onToggleUserStudyMode: () => void;
+  onClearHistory?: () => void;
 };
 
 export function ThreadListSidebar({
@@ -26,6 +27,7 @@ export function ThreadListSidebar({
   onToggleStructifyFeature,
   userStudyMode,
   onToggleUserStudyMode,
+  onClearHistory,
   ...props
 }: ThreadListSidebarProps) {
   return (
@@ -62,7 +64,7 @@ export function ThreadListSidebar({
         </div>
       </SidebarHeader>
       <SidebarContent className="aui-sidebar-content px-2">
-        <ThreadList />
+        <ThreadList onClearHistory={onClearHistory} />
       </SidebarContent>
       <SidebarFooter className="border-t border-sidebar-border">
         <SidebarMenu>

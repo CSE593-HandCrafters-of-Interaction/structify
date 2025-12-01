@@ -38,3 +38,15 @@ export const saveChatHistory = (messages: UIMessage[]): void => {
   }
 };
 
+export const clearChatHistory = (): void => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch (error) {
+    console.error("Failed to clear chat history from localStorage:", error);
+  }
+};
+

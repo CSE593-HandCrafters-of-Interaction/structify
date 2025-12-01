@@ -42,6 +42,7 @@ interface PromptItem {
 
 type PromptPanelExport = {
   version?: number;
+  panelTitle?: string;
   prompts: {
     id?: string;
     title?: string;
@@ -90,10 +91,13 @@ export function PromptPanel(props: PromptPanelProps = {}) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [newlyAddedPromptId, setNewlyAddedPromptId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [panelTitle, setPanelTitle] = useState("Structured Prompts");
+  const panelTitleInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleExportPrompts = useCallback(() => {
     const exportData: PromptPanelExport = {
       version: 1,
+      panelTitle: panelTitle,
       prompts: prompts.map((p) => ({
         id: p.id,
         title: p.title,
@@ -108,13 +112,13 @@ export function PromptPanel(props: PromptPanelProps = {}) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    const date = new Date().toISOString().slice(0, 10);
-    a.download = `structured-prompts-${date}.json`;
+    const sanitizedTitle = panelTitle.replace(/[^a-z0-9]/gi, '-').toLowerCase() || 'structured-prompts';
+    a.download = `${sanitizedTitle}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-  }, [prompts]);
+  }, [prompts, panelTitle]);
 
   const handleUploadClick = useCallback(() => {
     fileInputRef.current?.click();
@@ -146,6 +150,11 @@ export function PromptPanel(props: PromptPanelProps = {}) {
           }
 
           const timestamp = Date.now();
+          // Restore panel title if present in the imported file
+          if (json && typeof json === "object" && typeof json.panelTitle === "string" && json.panelTitle.length > 0) {
+            setPanelTitle(json.panelTitle);
+          }
+
           const normalized: PromptItem[] = rawPrompts.map((raw, index) => {
             const id =
               typeof raw.id === "string" && raw.id.length > 0
@@ -210,7 +219,7 @@ export function PromptPanel(props: PromptPanelProps = {}) {
 
       reader.readAsText(file);
     },
-    [setPrompts, setIsOpen],
+    [setPrompts, setIsOpen, setPanelTitle],
   );
 
   const addPrompt = () => {
@@ -544,7 +553,14 @@ Generate your response and follow all instructions above.`;
                   size="lg"
                   className="w-auto justify-start px-0 font-semibold"
                 >
-                  <span className="rounded-md px-3 py-1 text-xl">Structured Prompts</span>
+                  <input
+                    ref={panelTitleInputRef}
+                    type="text"
+                    value={panelTitle}
+                    onChange={(e) => setPanelTitle(e.target.value)}
+                    className="rounded-md px-3 py-1 text-xl bg-transparent border-none outline-none focus:outline-none focus:ring-0 focus:bg-transparent cursor-text w-full"
+                    style={{ font: 'inherit', color: 'inherit', appearance: 'none', WebkitAppearance: 'none' }}
+                  />
                 </SidebarMenuButton>
               </SidebarMenuItem>
 

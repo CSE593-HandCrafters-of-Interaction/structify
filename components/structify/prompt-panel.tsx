@@ -588,26 +588,28 @@ Generate your response and follow all instructions above.`;
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarHeader>
-          <div ref={scrollContainerRef} className="flex-1 space-y-4 overflow-y-auto">
-            {prompts.map((prompt) => (
-              <PromptCard
-                key={prompt.id}
-                id={prompt.id}
-                title={prompt.title}
-                content={prompt.content}
-                isEditing={prompt.isEditing}
-                onDelete={deletePrompt}
-                onUpdate={updatePrompt}
-                onEditingChange={(isEditing) => updateEditingState(prompt.id, isEditing)}
-                isIncluded={prompt.isIncluded}
-                onIncludeChange={(isIncluded) => updateIncludeState(prompt.id, isIncluded)}
-                summarySnapshot={prompt.summarySnapshot}
-                onSummarySnapshotChange={updateSummarySnapshot}
-                onSuggest={handleSuggestCard}
-                isSuggesting={suggestingCardId === prompt.id}
-                suggestVersion={prompt.suggestVersion}
-              />
-            ))}
+          <div className="flex-1 overflow-y-auto -pr-3 -mr-3">
+            <div ref={scrollContainerRef} className="space-y-4 mr-3">
+              {prompts.map((prompt) => (
+                <PromptCard
+                  key={prompt.id}
+                  id={prompt.id}
+                  title={prompt.title}
+                  content={prompt.content}
+                  isEditing={prompt.isEditing}
+                  onDelete={deletePrompt}
+                  onUpdate={updatePrompt}
+                  onEditingChange={(isEditing) => updateEditingState(prompt.id, isEditing)}
+                  isIncluded={prompt.isIncluded}
+                  onIncludeChange={(isIncluded) => updateIncludeState(prompt.id, isIncluded)}
+                  summarySnapshot={prompt.summarySnapshot}
+                  onSummarySnapshotChange={updateSummarySnapshot}
+                  onSuggest={handleSuggestCard}
+                  isSuggesting={suggestingCardId === prompt.id}
+                  suggestVersion={prompt.suggestVersion}
+                />
+              ))}
+            </div>
           </div>
 
           <Button

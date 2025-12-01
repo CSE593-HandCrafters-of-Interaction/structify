@@ -20,7 +20,7 @@ const ThreadListClear: FC<{ onClear: () => void }> = ({ onClear }) => {
   return (
     <Button
       onClick={onClear}
-      className="aui-thread-list-clear flex items-center justify-start gap-1 rounded-lg px-2.5 py-2 text-start hover:bg-muted"
+      className="aui-thread-list-clear mt-auto flex items-center justify-start gap-1 rounded-lg px-2.5 py-2 text-start hover:bg-muted"
       variant="ghost"
     >
       <Trash2Icon className="size-4" />

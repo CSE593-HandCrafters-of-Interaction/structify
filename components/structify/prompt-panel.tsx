@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef, ChangeEvent } from "react";
-import { Plus, ArrowLeft, Loader2, Download, Upload } from "lucide-react";
+import { Plus, ArrowLeft, Loader2, Download, Upload, Save } from "lucide-react";
 import { PromptCard } from "./prompt-card";
 import type { SummarySnapshot } from "./prompt-card";
 import { useAssistantApi } from "@assistant-ui/react";
@@ -21,16 +21,20 @@ import {
 import { PROMPT_COLLECT_EVENT, type PromptCollectDetail } from "@/lib/prompt-collector";
 import { useIsMobile } from "@/hooks/use-mobile";
 import initialPrompts from "@/data/initial.json";
+import { loadCurrentPrompts, saveCurrentPrompts, savePromptSet } from "@/lib/localStorage-prompts-adapter";
+import type { PromptSet } from "@/lib/localStorage-prompts-adapter";
 
 interface PromptPanelProps {
   onWidthChange?: (width: number) => void;
+  promptSetToLoad?: PromptSet | null;
+  onPromptSetLoaded?: () => void;
 }
 
 export type PromptCardContent =
   | { type: "bullet"; items: string[] }
   | { type: "slider"; value: number; min: number; max: number; step?: number };
 
-interface PromptItem {
+export interface PromptItem {
   id: string;
   title: string;
   content: PromptCardContent;
@@ -73,7 +77,7 @@ const clampPanelWidth = (value: number, maxWidth: number) =>
   Math.min(Math.max(value, PANEL_MIN_WIDTH), maxWidth);
 
 export function PromptPanel(props: PromptPanelProps = {}) {
-  const { onWidthChange } = props;
+  const { onWidthChange, promptSetToLoad, onPromptSetLoaded } = props;
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
   const [isSending, setIsSending] = useState(false);
@@ -85,14 +89,73 @@ export function PromptPanel(props: PromptPanelProps = {}) {
   });
   const api = useAssistantApi();
   const threadRuntime = api.thread();
-  const [prompts, setPrompts] = useState<PromptItem[]>(() =>
-    (initialPrompts as PromptItem[])
-  );
+  
+  // Load from localStorage or use initial prompts
+  const [prompts, setPrompts] = useState<PromptItem[]>(() => {
+    if (typeof window !== "undefined") {
+      const saved = loadCurrentPrompts();
+      if (saved && saved.prompts.length > 0) {
+        return saved.prompts;
+      }
+    }
+    return (initialPrompts as PromptItem[]);
+  });
+  
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [newlyAddedPromptId, setNewlyAddedPromptId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [panelTitle, setPanelTitle] = useState("Structured Prompts");
+  
+  // Load panel title from localStorage or use default
+  const [panelTitle, setPanelTitle] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = loadCurrentPrompts();
+      if (saved && saved.panelTitle) {
+        return saved.panelTitle;
+      }
+    }
+    return "Structured Prompts";
+  });
   const panelTitleInputRef = useRef<HTMLInputElement | null>(null);
+  
+  // Load prompt set when promptSetToLoad changes
+  useEffect(() => {
+    if (promptSetToLoad) {
+      setPrompts(promptSetToLoad.prompts.map(p => ({
+        ...p,
+        isEditing: false,
+        summarySnapshot: undefined,
+      })));
+      setPanelTitle(promptSetToLoad.title);
+      setIsOpen(true);
+      onPromptSetLoaded?.();
+    }
+  }, [promptSetToLoad, onPromptSetLoaded]);
+  
+  // Save to localStorage whenever prompts or panelTitle change
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      saveCurrentPrompts(prompts, panelTitle);
+    }
+  }, [prompts, panelTitle]);
+
+  const handleSavePromptSet = useCallback(() => {
+    const promptSet: PromptSet = {
+      id: `prompt-set-${Date.now()}`,
+      title: panelTitle || "Structured Prompts",
+      prompts: prompts.map((p) => ({
+        id: p.id,
+        title: p.title,
+        content: p.content,
+        isIncluded: p.isIncluded,
+        isEditing: false,
+      })),
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+    savePromptSet(promptSet);
+    // Trigger a refresh of the prompt list by dispatching a custom event
+    window.dispatchEvent(new CustomEvent("prompt-set-saved"));
+  }, [prompts, panelTitle]);
 
   const handleExportPrompts = useCallback(() => {
     const exportData: PromptPanelExport = {
@@ -565,6 +628,16 @@ Generate your response and follow all instructions above.`;
               </SidebarMenuItem>
 
               <SidebarMenuItem className="ml-auto flex gap-1">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  title="Save prompt set"
+                  onClick={handleSavePromptSet}
+                  className="h-8 w-8 rounded-full"
+                >
+                  <Save className="h-4 w-4" />
+                </Button>
                 <Button
                   type="button"
                   variant="ghost"

@@ -11,8 +11,10 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { ThreadList } from "@/components/structify/threadlist";
+import { PromptList } from "@/components/structify/promptlist";
 import { StructifyIcon } from "../logo/structify";
 import { Monitor, FlaskConical } from "lucide-react";
+import type { PromptSet } from "@/lib/localStorage-prompts-adapter";
 
 type ThreadListSidebarProps = React.ComponentProps<typeof Sidebar> & {
   structifyFeature: boolean;
@@ -20,6 +22,7 @@ type ThreadListSidebarProps = React.ComponentProps<typeof Sidebar> & {
   userStudyMode: boolean;
   onToggleUserStudyMode: () => void;
   onClearHistory?: () => void;
+  onSelectPromptSet?: (promptSet: PromptSet) => void;
 };
 
 export function ThreadListSidebar({
@@ -28,6 +31,7 @@ export function ThreadListSidebar({
   userStudyMode,
   onToggleUserStudyMode,
   onClearHistory,
+  onSelectPromptSet,
   ...props
 }: ThreadListSidebarProps) {
   return (
@@ -65,6 +69,12 @@ export function ThreadListSidebar({
       </SidebarHeader>
       <SidebarContent className="aui-sidebar-content px-2">
         <ThreadList onClearHistory={onClearHistory} />
+        <div className="mt-4 border-t pt-4">
+          <div className="mb-2 px-3 text-xs font-semibold text-muted-foreground uppercase">
+            Saved Prompts
+          </div>
+          <PromptList onSelectPromptSet={onSelectPromptSet} />
+        </div>
       </SidebarContent>
       <SidebarFooter className="border-t border-sidebar-border">
         <SidebarMenu>

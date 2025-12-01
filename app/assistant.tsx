@@ -18,6 +18,7 @@ import { PromptPanel } from "@/components/structify/prompt-panel";
 import { PANEL_SLIDE_DURATION_MS } from "@/components/ui/panel";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { loadChatHistory, saveChatHistory, clearChatHistory } from "@/lib/localStorage-history-adapter";
+import type { PromptSet } from "@/lib/localStorage-prompts-adapter";
 
 type AssistantThreadMessage = UIMessage & {
   content: string;
@@ -78,6 +79,8 @@ export const Assistant = () => {
   const [isSendingCinematic, setIsSendingCinematic] = useState(false);
   const [structifyFeature, setStructifyFeature] = useState(false);
   const [promptPanelWidth, setPromptPanelWidth] = useState(0);
+  const [selectedPromptSet, setSelectedPromptSet] = useState<PromptSet | null>(null);
+  
   const toggleUserStudyMode = useCallback(() => {
     setIsUserStudyMode((prev) => !prev);
     setCinematicIndex(0);
@@ -87,6 +90,14 @@ export const Assistant = () => {
     chat.setMessages([]);
     clearChatHistory();
   }, [chat]);
+
+  const handleSelectPromptSet = useCallback((promptSet: PromptSet) => {
+    setSelectedPromptSet(promptSet);
+  }, []);
+
+  const handlePromptSetLoaded = useCallback(() => {
+    setSelectedPromptSet(null);
+  }, []);
 
   const isMobileViewport = useIsMobile();
   const shouldHideSidebarTrigger = isMobileViewport && promptPanelWidth > 0;
@@ -183,6 +194,7 @@ export const Assistant = () => {
               userStudyMode={isUserStudyMode}
               onToggleUserStudyMode={toggleUserStudyMode}
               onClearHistory={handleClearHistory}
+              onSelectPromptSet={handleSelectPromptSet}
             />
             <SidebarInset>
               <SidebarExpandTrigger hidden={shouldHideSidebarTrigger} />
@@ -200,7 +212,11 @@ export const Assistant = () => {
               </div>
             </SidebarInset>
             {structifyFeature && (
-              <PromptPanel onWidthChange={setPromptPanelWidth} />
+              <PromptPanel 
+                onWidthChange={setPromptPanelWidth}
+                promptSetToLoad={selectedPromptSet}
+                onPromptSetLoaded={handlePromptSetLoaded}
+              />
             )}
           </div>
         </SidebarProvider>

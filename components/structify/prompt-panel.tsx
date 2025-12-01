@@ -523,7 +523,41 @@ export function PromptPanel(props: PromptPanelProps = {}) {
   );
 
   const sendAllPrompts = async () => {
-    setPrompts(prompts.map(p => ({ ...p, isEditing: false })));
+    const updatedPrompts = prompts.map(p => ({ ...p, isEditing: false }));
+    setPrompts(updatedPrompts);
+
+    // Auto-save the prompt set before sending
+    if (currentPromptSetId) {
+      const existingPromptSet = loadPromptSets().find(p => p.id === currentPromptSetId);
+      const promptSetToSave: PromptSet = existingPromptSet
+        ? {
+            ...existingPromptSet,
+            title: panelTitle || "Structured Prompts",
+            prompts: updatedPrompts.map((p) => ({
+              id: p.id,
+              title: p.title,
+              content: p.content,
+              isIncluded: p.isIncluded,
+              isEditing: false,
+            })),
+            updatedAt: Date.now(),
+          }
+        : {
+            id: currentPromptSetId,
+            title: panelTitle || "Structured Prompts",
+            prompts: updatedPrompts.map((p) => ({
+              id: p.id,
+              title: p.title,
+              content: p.content,
+              isIncluded: p.isIncluded,
+              isEditing: false,
+            })),
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+          };
+      savePromptSet(promptSetToSave);
+      window.dispatchEvent(new CustomEvent("prompt-set-saved"));
+    }
 
     let message = `You will now receive a unified set of structured instructions.
 They are organized into titled sections. Each section contains
@@ -536,7 +570,7 @@ After reading all sections, follow the FINAL INSTRUCTION section.
 Do not repeat or restate the instructions unless explicitly asked.
 
 `;
-    prompts.forEach((prompt) => {
+    updatedPrompts.forEach((prompt) => {
       // Only include included prompts
       if (!prompt.isIncluded) {
         return;

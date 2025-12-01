@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef, ChangeEvent } from "react";
-import { Plus, ArrowLeft, Loader2, Download, Upload, Save, MoreVertical } from "lucide-react";
+import { Plus, ArrowLeft, Loader2, Download, Upload, Save, MoreVertical, Check } from "lucide-react";
 import { PromptCard } from "./prompt-card";
 import type { SummarySnapshot } from "./prompt-card";
 import { useAssistantApi } from "@assistant-ui/react";
@@ -117,6 +117,7 @@ export function PromptPanel(props: PromptPanelProps = {}) {
     return "Structured Prompts";
   });
   const panelTitleInputRef = useRef<HTMLInputElement | null>(null);
+  const [isTitleFocused, setIsTitleFocused] = useState(false);
   
   // Track current prompt set ID from the loaded prompt set
   const [currentPromptSetId, setCurrentPromptSetId] = useState<string | null>(null);
@@ -673,20 +674,53 @@ Generate your response and follow all instructions above.`;
                 />
               </SidebarMenuItem>
               <SidebarMenuItem className="flex-1 min-w-0">
-                <SidebarMenuButton
-                  asChild
-                  size="lg"
-                  className="w-full justify-start px-0 font-semibold"
-                >
-                  <input
-                    ref={panelTitleInputRef}
-                    type="text"
-                    value={panelTitle}
-                    onChange={(e) => setPanelTitle(e.target.value)}
-                    className="rounded-md px-3 py-1 text-xl bg-transparent border-none outline-none focus:outline-none focus:ring-0 focus:bg-transparent cursor-text w-full"
-                    style={{ font: 'inherit', color: 'inherit', appearance: 'none', WebkitAppearance: 'none' }}
-                  />
-                </SidebarMenuButton>
+                <div className="relative w-full">
+                  <SidebarMenuButton
+                    asChild
+                    size="lg"
+                    className="w-full justify-start px-0 font-semibold"
+                  >
+                    <input
+                      ref={panelTitleInputRef}
+                      type="text"
+                      value={panelTitle}
+                      onChange={(e) => setPanelTitle(e.target.value)}
+                      onFocus={() => setIsTitleFocused(true)}
+                      onBlur={() => setIsTitleFocused(false)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleSavePromptSet();
+                          panelTitleInputRef.current?.blur();
+                        }
+                      }}
+                      className="rounded-md px-3 py-1 pr-10 text-xl bg-transparent border-none outline-none focus:outline-none focus:ring-0 focus:bg-transparent cursor-text w-full"
+                      style={{ font: 'inherit', color: 'inherit', appearance: 'none', WebkitAppearance: 'none' }}
+                    />
+                  </SidebarMenuButton>
+                  {isTitleFocused && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSavePromptSet();
+                        setTimeout(() => {
+                          panelTitleInputRef.current?.blur();
+                        }, 100);
+                      }}
+                      className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full"
+                      title="Save title"
+                    >
+                      <Check className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
               </SidebarMenuItem>
 
               <SidebarMenuItem className="ml-auto">

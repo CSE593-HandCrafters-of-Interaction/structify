@@ -1,6 +1,6 @@
 import type { FC } from "react";
 import { ThreadListPrimitive } from "@assistant-ui/react";
-import { Trash2Icon } from "lucide-react";
+import { Shredder } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
@@ -20,11 +20,11 @@ const ThreadListClear: FC<{ onClear: () => void }> = ({ onClear }) => {
   return (
     <Button
       onClick={onClear}
-      className="aui-thread-list-clear mt-auto flex items-center justify-start gap-1 rounded-lg px-2.5 py-2 text-start hover:bg-muted"
+      className="aui-thread-list-clear mt-auto flex items-center justify-center gap-1 rounded-lg px-2.5 py-2 text-center hover:bg-muted"
       variant="ghost"
     >
-      <Trash2Icon className="size-4" />
-      Nuke Current Chat
+      <Shredder className="size-4" />
+      Shred All Conversations
     </Button>
   );
 };

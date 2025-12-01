@@ -716,16 +716,6 @@ Generate your response and follow all instructions above.`;
                       <Upload className="h-4 w-4" />
                       <span>Export</span>
                     </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleUploadClick}
-                      className="w-full justify-start gap-2 rounded-none h-9 px-3"
-                    >
-                      <Download className="h-4 w-4" />
-                      <span>Import</span>
-                    </Button>
                     </div>
                   </div>
                 </div>

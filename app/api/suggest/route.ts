@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { google } from "@ai-sdk/google";
 import { generateText } from "ai";
 
-const SUGGEST_MODEL = google("gemini-3-pro-preview");
+const SUGGEST_MODEL = google("models/gemini-flash-latest");
 
 type BulletContent = {
   type: "bullet";

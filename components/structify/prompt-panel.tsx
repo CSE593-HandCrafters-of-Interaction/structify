@@ -28,7 +28,7 @@ interface PromptPanelProps {
   onWidthChange?: (width: number) => void;
   promptSetToLoad?: PromptSet | null;
   onPromptSetLoaded?: () => void;
-  onPromptSetIdChange?: (id: string | null) => void;
+  currentPromptSetId?: string | null;
 }
 
 export type PromptCardContent =
@@ -78,7 +78,7 @@ const clampPanelWidth = (value: number, maxWidth: number) =>
   Math.min(Math.max(value, PANEL_MIN_WIDTH), maxWidth);
 
 export function PromptPanel(props: PromptPanelProps = {}) {
-  const { onWidthChange, promptSetToLoad, onPromptSetLoaded, onPromptSetIdChange } = props;
+  const { onWidthChange, promptSetToLoad, onPromptSetLoaded, currentPromptSetId: currentPromptSetIdProp } = props;
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
   const [isSending, setIsSending] = useState(false);
@@ -120,19 +120,34 @@ export function PromptPanel(props: PromptPanelProps = {}) {
   const [isTitleFocused, setIsTitleFocused] = useState(false);
   
   // Track current prompt set ID from the loaded prompt set
-  const [currentPromptSetId, setCurrentPromptSetId] = useState<string | null>(null);
+  // Use prop if provided, otherwise use internal state
+  const [internalPromptSetId, setInternalPromptSetId] = useState<string | null>(null);
+  const currentPromptSetId = currentPromptSetIdProp ?? internalPromptSetId;
+  
+  // Use refs to track latest values for saving when switching prompt sets
+  const promptsRef = useRef(prompts);
+  const panelTitleRef = useRef(panelTitle);
+  const currentPromptSetIdRef = useRef(currentPromptSetId);
+  
+  // Keep refs in sync with state
+  useEffect(() => {
+    promptsRef.current = prompts;
+    panelTitleRef.current = panelTitle;
+    currentPromptSetIdRef.current = currentPromptSetId;
+  }, [prompts, panelTitle, currentPromptSetId]);
   
   // Load prompt set when promptSetToLoad changes
   useEffect(() => {
     if (promptSetToLoad) {
-      // Save current prompts before loading new ones
-      if (prompts.length > 0 && currentPromptSetId) {
-        const existingPromptSet = loadPromptSets().find(p => p.id === currentPromptSetId);
+      // Only save current prompts if we're switching to a different prompt set
+      const isSwitchingToDifferentSet = currentPromptSetIdRef.current && promptSetToLoad.id !== currentPromptSetIdRef.current;
+      if (isSwitchingToDifferentSet && promptsRef.current.length > 0 && currentPromptSetIdRef.current) {
+        const existingPromptSet = loadPromptSets().find(p => p.id === currentPromptSetIdRef.current);
         const currentPromptSet: PromptSet = existingPromptSet
           ? {
               ...existingPromptSet,
-              title: panelTitle || "Structured Prompts",
-              prompts: prompts.map((p) => ({
+              title: panelTitleRef.current || "Structured Prompts",
+              prompts: promptsRef.current.map((p) => ({
                 id: p.id,
                 title: p.title,
                 content: p.content,
@@ -142,9 +157,9 @@ export function PromptPanel(props: PromptPanelProps = {}) {
               updatedAt: Date.now(),
             }
           : {
-              id: currentPromptSetId,
-              title: panelTitle || "Structured Prompts",
-              prompts: prompts.map((p) => ({
+              id: currentPromptSetIdRef.current,
+              title: panelTitleRef.current || "Structured Prompts",
+              prompts: promptsRef.current.map((p) => ({
                 id: p.id,
                 title: p.title,
                 content: p.content,
@@ -165,16 +180,17 @@ export function PromptPanel(props: PromptPanelProps = {}) {
         summarySnapshot: undefined,
       })));
       setPanelTitle(promptSetToLoad.title);
-      setCurrentPromptSetId(promptSetToLoad.id);
+      if (!currentPromptSetIdProp) {
+        setInternalPromptSetId(promptSetToLoad.id);
+      }
       setIsOpen(true);
-      onPromptSetIdChange?.(promptSetToLoad.id);
       onPromptSetLoaded?.();
     } else if (promptSetToLoad === null && currentPromptSetId) {
       // Panel was closed, but keep the current prompt set ID so we can reload it
       // Only clear if we're loading a different prompt set
       // Don't clear here - let it be cleared when a new prompt set is loaded
     }
-  }, [promptSetToLoad, onPromptSetLoaded, onPromptSetIdChange, prompts, panelTitle, currentPromptSetId]);
+  }, [promptSetToLoad, onPromptSetLoaded, currentPromptSetIdProp]);
   
   // Save to localStorage whenever prompts or panelTitle change
   useEffect(() => {
@@ -215,7 +231,9 @@ export function PromptPanel(props: PromptPanelProps = {}) {
           updatedAt: Date.now(),
         };
     savePromptSet(promptSet);
-    setCurrentPromptSetId(promptSet.id);
+    if (!currentPromptSetIdProp) {
+      setInternalPromptSetId(promptSet.id);
+    }
     // Trigger a refresh of the prompt list by dispatching a custom event
     window.dispatchEvent(new CustomEvent("prompt-set-saved"));
   }, [prompts, panelTitle, currentPromptSetId]);

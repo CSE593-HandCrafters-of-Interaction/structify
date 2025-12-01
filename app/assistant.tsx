@@ -107,10 +107,6 @@ export const Assistant = () => {
     isReloadingRef.current = false;
   }, []);
 
-  const handlePromptSetIdChange = useCallback((id: string | null) => {
-    setCurrentPromptSetId(id);
-  }, []);
-
   const handleClosePanelForEdit = useCallback(() => {
     // Don't clear currentPromptSetId - we need it to reload after editing
     setSelectedPromptSet(null);
@@ -248,7 +244,7 @@ export const Assistant = () => {
                 onWidthChange={setPromptPanelWidth}
                 promptSetToLoad={selectedPromptSet}
                 onPromptSetLoaded={handlePromptSetLoaded}
-                onPromptSetIdChange={handlePromptSetIdChange}
+                currentPromptSetId={currentPromptSetId}
               />
             )}
           </div>

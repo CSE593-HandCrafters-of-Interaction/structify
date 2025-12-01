@@ -472,6 +472,9 @@ export function PromptCard({
                         type="number"
                         value={editContent}
                         onChange={(e) => {
+                          setEditContent(e.target.value);
+                        }}
+                        onBlur={(e) => {
                           const newValue = parseFloat(e.target.value) || 0;
                           const clampedValue = Math.max(
                             editMin,
@@ -479,6 +482,11 @@ export function PromptCard({
                           );
                           setEditContent(clampedValue.toString());
                           setEditSliderValue(clampedValue);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.currentTarget.blur();
+                          }
                         }}
                         min={editMin}
                         max={editMax}

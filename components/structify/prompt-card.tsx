@@ -305,8 +305,8 @@ export function PromptCard({
         title: editTitle,
         content: nextContent
       });
-      setEditSliderValue(clampedValue);
-      setEditContent(clampedValue.toString());
+      // Don't update edit state here - let blur handlers handle validation
+      // This allows users to type freely without interruption
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editTitle, editContent, editSliderValue, editMin, editMax, id, isEditing, onUpdate]);

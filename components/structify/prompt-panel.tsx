@@ -610,11 +610,11 @@ Generate your response and follow all instructions above.`;
                   srLabel="Close prompt panel"
                 />
               </SidebarMenuItem>
-              <SidebarMenuItem className="w-auto">
+              <SidebarMenuItem className="flex-1 min-w-0">
                 <SidebarMenuButton
                   asChild
                   size="lg"
-                  className="w-auto justify-start px-0 font-semibold"
+                  className="w-full justify-start px-0 font-semibold"
                 >
                   <input
                     ref={panelTitleInputRef}

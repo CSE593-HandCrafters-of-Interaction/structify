@@ -26,6 +26,9 @@ type ThreadListSidebarProps = React.ComponentProps<typeof Sidebar> & {
   onToggleUserStudyMode: () => void;
   onClearHistory?: () => void;
   onSelectPromptSet?: (promptSet: PromptSet) => void;
+  currentPromptSetId?: string | null;
+  onClosePanelForEdit?: () => void;
+  onReloadPromptSet?: (promptSetId: string) => void;
 };
 
 export function ThreadListSidebar({
@@ -35,6 +38,9 @@ export function ThreadListSidebar({
   onToggleUserStudyMode,
   onClearHistory,
   onSelectPromptSet,
+  currentPromptSetId,
+  onClosePanelForEdit,
+  onReloadPromptSet,
   ...props
 }: ThreadListSidebarProps) {
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
@@ -227,7 +233,12 @@ export function ThreadListSidebar({
           <div className="mb-2 px-3 text-xs font-semibold text-muted-foreground uppercase">
             Saved Prompts
           </div>
-          <PromptList onSelectPromptSet={onSelectPromptSet} />
+          <PromptList 
+            onSelectPromptSet={onSelectPromptSet}
+            currentPromptSetId={currentPromptSetId}
+            onClosePanelForEdit={onClosePanelForEdit}
+            onReloadPromptSet={onReloadPromptSet}
+          />
         </div>
       </SidebarContent>
       <SidebarFooter className="border-t border-sidebar-border">

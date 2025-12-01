@@ -19,6 +19,7 @@ import { PANEL_SLIDE_DURATION_MS } from "@/components/ui/panel";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { loadChatHistory, saveChatHistory, clearChatHistory } from "@/lib/localStorage-history-adapter";
 import type { PromptSet } from "@/lib/localStorage-prompts-adapter";
+import { loadPromptSets } from "@/lib/localStorage-prompts-adapter";
 
 type AssistantThreadMessage = UIMessage & {
   content: string;
@@ -80,6 +81,8 @@ export const Assistant = () => {
   const [structifyFeature, setStructifyFeature] = useState(false);
   const [promptPanelWidth, setPromptPanelWidth] = useState(0);
   const [selectedPromptSet, setSelectedPromptSet] = useState<PromptSet | null>(null);
+  const [currentPromptSetId, setCurrentPromptSetId] = useState<string | null>(null);
+  const isReloadingRef = useRef(false);
   
   const toggleUserStudyMode = useCallback(() => {
     setIsUserStudyMode((prev) => !prev);
@@ -93,10 +96,36 @@ export const Assistant = () => {
 
   const handleSelectPromptSet = useCallback((promptSet: PromptSet) => {
     setSelectedPromptSet(promptSet);
+    setCurrentPromptSetId(promptSet.id);
   }, []);
 
   const handlePromptSetLoaded = useCallback(() => {
+    // Don't clear if we're reloading - we want to keep it open
+    if (!isReloadingRef.current) {
+      setSelectedPromptSet(null);
+    }
+    isReloadingRef.current = false;
+  }, []);
+
+  const handlePromptSetIdChange = useCallback((id: string | null) => {
+    setCurrentPromptSetId(id);
+  }, []);
+
+  const handleClosePanelForEdit = useCallback(() => {
+    // Don't clear currentPromptSetId - we need it to reload after editing
     setSelectedPromptSet(null);
+  }, []);
+
+  const handleReloadPromptSet = useCallback((promptSetId: string) => {
+    if (typeof window !== "undefined") {
+      isReloadingRef.current = true;
+      const promptSets = loadPromptSets();
+      const updatedPromptSet = promptSets.find(p => p.id === promptSetId);
+      if (updatedPromptSet) {
+        setSelectedPromptSet(updatedPromptSet);
+        setCurrentPromptSetId(promptSetId);
+      }
+    }
   }, []);
 
   const isMobileViewport = useIsMobile();
@@ -195,6 +224,9 @@ export const Assistant = () => {
               onToggleUserStudyMode={toggleUserStudyMode}
               onClearHistory={handleClearHistory}
               onSelectPromptSet={handleSelectPromptSet}
+              currentPromptSetId={currentPromptSetId}
+              onClosePanelForEdit={handleClosePanelForEdit}
+              onReloadPromptSet={handleReloadPromptSet}
             />
             <SidebarInset>
               <SidebarExpandTrigger hidden={shouldHideSidebarTrigger} />
@@ -216,6 +248,7 @@ export const Assistant = () => {
                 onWidthChange={setPromptPanelWidth}
                 promptSetToLoad={selectedPromptSet}
                 onPromptSetLoaded={handlePromptSetLoaded}
+                onPromptSetIdChange={handlePromptSetIdChange}
               />
             )}
           </div>

@@ -28,6 +28,7 @@ interface PromptPanelProps {
   onWidthChange?: (width: number) => void;
   promptSetToLoad?: PromptSet | null;
   onPromptSetLoaded?: () => void;
+  onPromptSetIdChange?: (id: string | null) => void;
 }
 
 export type PromptCardContent =
@@ -77,7 +78,7 @@ const clampPanelWidth = (value: number, maxWidth: number) =>
   Math.min(Math.max(value, PANEL_MIN_WIDTH), maxWidth);
 
 export function PromptPanel(props: PromptPanelProps = {}) {
-  const { onWidthChange, promptSetToLoad, onPromptSetLoaded } = props;
+  const { onWidthChange, promptSetToLoad, onPromptSetLoaded, onPromptSetIdChange } = props;
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
   const [isSending, setIsSending] = useState(false);
@@ -165,9 +166,14 @@ export function PromptPanel(props: PromptPanelProps = {}) {
       setPanelTitle(promptSetToLoad.title);
       setCurrentPromptSetId(promptSetToLoad.id);
       setIsOpen(true);
+      onPromptSetIdChange?.(promptSetToLoad.id);
       onPromptSetLoaded?.();
+    } else if (promptSetToLoad === null && currentPromptSetId) {
+      // Panel was closed, but keep the current prompt set ID so we can reload it
+      // Only clear if we're loading a different prompt set
+      // Don't clear here - let it be cleared when a new prompt set is loaded
     }
-  }, [promptSetToLoad, onPromptSetLoaded, prompts, panelTitle, currentPromptSetId]);
+  }, [promptSetToLoad, onPromptSetLoaded, onPromptSetIdChange, prompts, panelTitle, currentPromptSetId]);
   
   // Save to localStorage whenever prompts or panelTitle change
   useEffect(() => {

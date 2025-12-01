@@ -7,9 +7,17 @@ import { loadPromptSets, deletePromptSet, savePromptSet } from "@/lib/localStora
 
 type PromptListProps = {
   onSelectPromptSet?: (promptSet: PromptSet) => void;
+  currentPromptSetId?: string | null;
+  onClosePanelForEdit?: () => void;
+  onReloadPromptSet?: (promptSetId: string) => void;
 };
 
-export const PromptList: FC<PromptListProps> = ({ onSelectPromptSet }) => {
+export const PromptList: FC<PromptListProps> = ({ 
+  onSelectPromptSet,
+  currentPromptSetId,
+  onClosePanelForEdit,
+  onReloadPromptSet,
+}) => {
   const [promptSets, setPromptSets] = React.useState<PromptSet[]>([]);
 
   React.useEffect(() => {
@@ -38,6 +46,13 @@ export const PromptList: FC<PromptListProps> = ({ onSelectPromptSet }) => {
   const handleUpdate = (updatedPromptSet: PromptSet) => {
     savePromptSet(updatedPromptSet);
     setPromptSets(loadPromptSets());
+    // Reload the prompt set in the panel if it's the current one
+    // Use a small delay to ensure the panel has closed first
+    if (updatedPromptSet.id === currentPromptSetId && onReloadPromptSet) {
+      setTimeout(() => {
+        onReloadPromptSet(updatedPromptSet.id);
+      }, 100);
+    }
   };
 
   if (promptSets.length === 0) {
@@ -59,6 +74,8 @@ export const PromptList: FC<PromptListProps> = ({ onSelectPromptSet }) => {
           onSelect={handleSelect}
           onDelete={handleDelete}
           onUpdate={handleUpdate}
+          currentPromptSetId={currentPromptSetId}
+          onClosePanelForEdit={onClosePanelForEdit}
         />
       ))}
     </div>
@@ -70,7 +87,9 @@ const PromptListItem: FC<{
   onSelect: (promptSet: PromptSet) => void;
   onDelete: (id: string, e: React.MouseEvent) => void;
   onUpdate: (promptSet: PromptSet) => void;
-}> = ({ promptSet, onSelect, onDelete, onUpdate }) => {
+  currentPromptSetId?: string | null;
+  onClosePanelForEdit?: () => void;
+}> = ({ promptSet, onSelect, onDelete, onUpdate, currentPromptSetId, onClosePanelForEdit }) => {
   const [isEditing, setIsEditing] = React.useState(false);
   const [editedTitle, setEditedTitle] = React.useState(promptSet.title || "Untitled");
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -84,6 +103,10 @@ const PromptListItem: FC<{
 
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
+    // Close the panel if this is the currently loaded prompt set
+    if (promptSet.id === currentPromptSetId && onClosePanelForEdit) {
+      onClosePanelForEdit();
+    }
     setIsEditing(true);
     setEditedTitle(promptSet.title || "Untitled");
   };

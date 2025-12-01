@@ -21,7 +21,7 @@ import {
 import { PROMPT_COLLECT_EVENT, type PromptCollectDetail } from "@/lib/prompt-collector";
 import { useIsMobile } from "@/hooks/use-mobile";
 import initialPrompts from "@/data/initial.json";
-import { loadCurrentPrompts, saveCurrentPrompts, savePromptSet } from "@/lib/localStorage-prompts-adapter";
+import { loadCurrentPrompts, saveCurrentPrompts, savePromptSet, loadPromptSets } from "@/lib/localStorage-prompts-adapter";
 import type { PromptSet } from "@/lib/localStorage-prompts-adapter";
 
 interface PromptPanelProps {
@@ -117,19 +117,57 @@ export function PromptPanel(props: PromptPanelProps = {}) {
   });
   const panelTitleInputRef = useRef<HTMLInputElement | null>(null);
   
+  // Track current prompt set ID from the loaded prompt set
+  const [currentPromptSetId, setCurrentPromptSetId] = useState<string | null>(null);
+  
   // Load prompt set when promptSetToLoad changes
   useEffect(() => {
     if (promptSetToLoad) {
+      // Save current prompts before loading new ones
+      if (prompts.length > 0 && currentPromptSetId) {
+        const existingPromptSet = loadPromptSets().find(p => p.id === currentPromptSetId);
+        const currentPromptSet: PromptSet = existingPromptSet
+          ? {
+              ...existingPromptSet,
+              title: panelTitle || "Structured Prompts",
+              prompts: prompts.map((p) => ({
+                id: p.id,
+                title: p.title,
+                content: p.content,
+                isIncluded: p.isIncluded,
+                isEditing: false,
+              })),
+              updatedAt: Date.now(),
+            }
+          : {
+              id: currentPromptSetId,
+              title: panelTitle || "Structured Prompts",
+              prompts: prompts.map((p) => ({
+                id: p.id,
+                title: p.title,
+                content: p.content,
+                isIncluded: p.isIncluded,
+                isEditing: false,
+              })),
+              createdAt: Date.now(),
+              updatedAt: Date.now(),
+            };
+        savePromptSet(currentPromptSet);
+        window.dispatchEvent(new CustomEvent("prompt-set-saved"));
+      }
+      
+      // Load the new prompt set
       setPrompts(promptSetToLoad.prompts.map(p => ({
         ...p,
         isEditing: false,
         summarySnapshot: undefined,
       })));
       setPanelTitle(promptSetToLoad.title);
+      setCurrentPromptSetId(promptSetToLoad.id);
       setIsOpen(true);
       onPromptSetLoaded?.();
     }
-  }, [promptSetToLoad, onPromptSetLoaded]);
+  }, [promptSetToLoad, onPromptSetLoaded, prompts, panelTitle, currentPromptSetId]);
   
   // Save to localStorage whenever prompts or panelTitle change
   useEffect(() => {
@@ -139,23 +177,41 @@ export function PromptPanel(props: PromptPanelProps = {}) {
   }, [prompts, panelTitle]);
 
   const handleSavePromptSet = useCallback(() => {
-    const promptSet: PromptSet = {
-      id: `prompt-set-${Date.now()}`,
-      title: panelTitle || "Structured Prompts",
-      prompts: prompts.map((p) => ({
-        id: p.id,
-        title: p.title,
-        content: p.content,
-        isIncluded: p.isIncluded,
-        isEditing: false,
-      })),
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    };
+    const existingPromptSet = currentPromptSetId 
+      ? loadPromptSets().find(p => p.id === currentPromptSetId)
+      : null;
+    
+    const promptSet: PromptSet = existingPromptSet
+      ? {
+          ...existingPromptSet,
+          title: panelTitle || "Structured Prompts",
+          prompts: prompts.map((p) => ({
+            id: p.id,
+            title: p.title,
+            content: p.content,
+            isIncluded: p.isIncluded,
+            isEditing: false,
+          })),
+          updatedAt: Date.now(),
+        }
+      : {
+          id: `prompt-set-${Date.now()}`,
+          title: panelTitle || "Structured Prompts",
+          prompts: prompts.map((p) => ({
+            id: p.id,
+            title: p.title,
+            content: p.content,
+            isIncluded: p.isIncluded,
+            isEditing: false,
+          })),
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        };
     savePromptSet(promptSet);
+    setCurrentPromptSetId(promptSet.id);
     // Trigger a refresh of the prompt list by dispatching a custom event
     window.dispatchEvent(new CustomEvent("prompt-set-saved"));
-  }, [prompts, panelTitle]);
+  }, [prompts, panelTitle, currentPromptSetId]);
 
   const handleExportPrompts = useCallback(() => {
     const exportData: PromptPanelExport = {

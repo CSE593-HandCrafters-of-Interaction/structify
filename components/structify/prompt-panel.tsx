@@ -20,6 +20,7 @@ import {
 } from "../ui/panel";
 import { PROMPT_COLLECT_EVENT, type PromptCollectDetail } from "@/lib/prompt-collector";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 import initialPrompts from "@/data/initial.json";
 import { loadCurrentPrompts, saveCurrentPrompts, savePromptSet, loadPromptSets } from "@/lib/localStorage-prompts-adapter";
 import type { PromptSet } from "@/lib/localStorage-prompts-adapter";
@@ -787,7 +788,10 @@ Generate your response and follow all instructions above.`;
                           panelTitleInputRef.current?.blur();
                         }
                       }}
-                      className="rounded-md px-3 py-1 pr-10 text-xl bg-transparent border-none outline-none focus:outline-none focus:ring-0 focus:bg-transparent cursor-text w-full"
+                      className={cn(
+                        "rounded-md px-3 py-1 text-xl bg-transparent border-none outline-none focus:outline-none focus:ring-0 focus:bg-transparent cursor-text w-full",
+                        isTitleFocused && "pr-10"
+                      )}
                       style={{ font: 'inherit', color: 'inherit', appearance: 'none', WebkitAppearance: 'none' }}
                     />
                   </SidebarMenuButton>

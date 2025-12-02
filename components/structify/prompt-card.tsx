@@ -391,11 +391,13 @@ export function PromptCard({
               className="text-sm font-semibold"
             />
           ) : (
-            <h3 className="mb-3 pr-6 font-semibold line-clamp-2">
+            <h3 className="mb-3 pr-6 font-semibold line-clamp-2 min-h-6">
               {(!title || title.trim() === "") && content?.type === "bullet" && content.items.length === 0 ? (
                 <span className="text-gray-400 dark:text-gray-500 italic">New Prompt</span>
-              ) : (
+              ) : title && title.trim() !== "" ? (
                 truncateText(title, 80)
+              ) : (
+                <span className="invisible">&#8203;</span>
               )}
             </h3>
           )}

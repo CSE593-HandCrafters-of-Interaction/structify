@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef, ChangeEvent } from "react";
-import { Plus, ArrowLeft, Loader2, Download, Upload, Save, MoreVertical, Check } from "lucide-react";
+import { Plus, ArrowLeft, Loader2, Upload, Save, Check } from "lucide-react";
 import { PromptCard } from "./prompt-card";
 import type { SummarySnapshot } from "./prompt-card";
 import { useAssistantApi } from "@assistant-ui/react";
@@ -820,42 +820,27 @@ Generate your response and follow all instructions above.`;
                 </div>
               </SidebarMenuItem>
 
-              <SidebarMenuItem className="ml-auto">
-                <div className="relative group/menu">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    title="Menu"
-                    className="h-8 w-8 rounded-full"
-                  >
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                  <div className="absolute right-0 top-full pt-1 opacity-0 invisible group-hover/menu:opacity-100 group-hover/menu:visible transition-all duration-200 z-50 pointer-events-none group-hover/menu:pointer-events-auto">
-                    <div className="bg-background border border-border rounded-md shadow-lg py-1 min-w-[160px]">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleSavePromptSet}
-                        className="w-full justify-start gap-2 rounded-none h-9 px-3"
-                      >
-                        <Save className="h-4 w-4" />
-                        <span>Save</span>
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleExportPrompts}
-                        className="w-full justify-start gap-2 rounded-none h-9 px-3"
-                      >
-                        <Upload className="h-4 w-4" />
-                        <span>Export</span>
-                      </Button>
-                    </div>
-                  </div>
-                </div>
+              <SidebarMenuItem className="ml-auto flex items-center gap-1">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleSavePromptSet}
+                  title="Save"
+                  className="h-7 w-7"
+                >
+                  <Save className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleExportPrompts}
+                  title="Export"
+                  className="h-7 w-7"
+                >
+                  <Upload className="h-3.5 w-3.5" />
+                </Button>
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarHeader>

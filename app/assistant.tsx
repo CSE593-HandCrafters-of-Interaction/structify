@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/sidebar";
 import { ThreadListSidebar } from "@/components/structify/sidebar";
 import { PromptPanel } from "@/components/structify/prompt-panel";
+import { SettingsView } from "@/components/structify/settings-view";
 import { PANEL_SLIDE_DURATION_MS } from "@/components/ui/panel";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { loadChatHistory, saveChatHistory, clearChatHistory } from "@/lib/localStorage-history-adapter";
@@ -83,6 +84,7 @@ export const Assistant = () => {
   const [promptPanelWidth, setPromptPanelWidth] = useState(0);
   const [currentPromptSet, setCurrentPromptSet] = useState<PromptSet | null>(null);
   const [shouldOpenWelcome, setShouldOpenWelcome] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const isReloadingRef = useRef(false);
   
   const toggleUserStudyMode = useCallback(() => {
@@ -354,6 +356,7 @@ export const Assistant = () => {
               onClosePanelForEdit={handleClosePanelForEdit}
               onReloadPromptSet={handleReloadPromptSet}
               onOpenWelcomeView={handleOpenWelcomeView}
+              onSettingsClick={() => setIsSettingsOpen(true)}
             />
             <SidebarInset>
               <SidebarExpandTrigger hidden={shouldHideSidebarTrigger} />
@@ -386,6 +389,7 @@ export const Assistant = () => {
               />
             )}
           </div>
+          <SettingsView open={isSettingsOpen} onOpenChange={setIsSettingsOpen} />
         </SidebarProvider>
       </CinematicProvider>
     </AssistantRuntimeProvider>

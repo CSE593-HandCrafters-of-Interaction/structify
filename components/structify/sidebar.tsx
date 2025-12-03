@@ -13,7 +13,7 @@ import {
 import { ThreadList } from "@/components/structify/threadlist";
 import { PromptList } from "@/components/structify/promptlist";
 import { StructifyIcon } from "../logo/structify";
-import { Monitor, FlaskConical, Plus, Download, Upload } from "lucide-react";
+import { Monitor, FlaskConical, Plus, Download, Upload, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { PromptSet } from "@/lib/localStorage-prompts-adapter";
 import { savePromptSet } from "@/lib/localStorage-prompts-adapter";
@@ -30,6 +30,7 @@ type ThreadListSidebarProps = React.ComponentProps<typeof Sidebar> & {
   onClosePanelForEdit?: () => void;
   onReloadPromptSet?: (promptSetId: string) => void;
   onOpenWelcomeView?: () => void;
+  onSettingsClick?: () => void;
 };
 
 export function ThreadListSidebar({
@@ -43,6 +44,7 @@ export function ThreadListSidebar({
   onClosePanelForEdit,
   onReloadPromptSet,
   onOpenWelcomeView,
+  onSettingsClick,
   ...props
 }: ThreadListSidebarProps) {
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
@@ -242,31 +244,43 @@ export function ThreadListSidebar({
       <SidebarFooter className="border-t border-sidebar-border">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton
-              size="sm"
-              aria-pressed={userStudyMode}
-              onClick={onToggleUserStudyMode}
-              title={
-                userStudyMode
-                  ? "Switch to Normal Mode"
-                  : "Switch to User Study Mode"
-              }
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex size-8 items-center justify-center rounded-md bg-muted text-muted-foreground">
-                  {userStudyMode ? (
-                    <FlaskConical className="size-4" aria-hidden="true" />
-                  ) : (
-                    <Monitor className="size-4" aria-hidden="true" />
-                  )}
+            <div className="flex items-center gap-2">
+              <SidebarMenuButton
+                size="sm"
+                aria-pressed={userStudyMode}
+                onClick={onToggleUserStudyMode}
+                title={
+                  userStudyMode
+                    ? "Switch to Normal Mode"
+                    : "Switch to User Study Mode"
+                }
+                className="flex-1"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex size-8 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                    {userStudyMode ? (
+                      <FlaskConical className="size-4" aria-hidden="true" />
+                    ) : (
+                      <Monitor className="size-4" aria-hidden="true" />
+                    )}
+                  </div>
+                  <div className="flex flex-col text-left leading-tight">
+                    <span className="text-sm font-medium">
+                      {userStudyMode ? "User Study Mode" : "Normal Mode"}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex flex-col text-left leading-tight">
-                  <span className="text-sm font-medium">
-                    {userStudyMode ? "User Study Mode" : "Normal Mode"}
-                  </span>
-                </div>
-              </div>
-            </SidebarMenuButton>
+              </SidebarMenuButton>
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={onSettingsClick}
+                title="Settings"
+                className="size-8"
+              >
+                <Settings className="size-4" aria-hidden="true" />
+              </Button>
+            </div>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>

@@ -23,6 +23,7 @@ import { PROMPT_COLLECT_EVENT, type PromptCollectDetail } from "@/lib/prompt-col
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import type { PromptSet } from "@/lib/localStorage-prompts-adapter";
+import { loadPromptPrefix } from "@/lib/localStorage-settings-adapter";
 import initialPrompts from "@/data/initial.json";
 
 interface PromptPanelProps {
@@ -523,17 +524,7 @@ export function PromptPanel(props: PromptPanelProps) {
       updatedAt: Date.now(),
     });
 
-    let message = `You will now receive a unified set of structured instructions.
-They are organized into titled sections. Each section contains
-bullet points that define requirements, constraints, or examples.
-
-Interpret every section as part of one cohesive prompt.
-Titles are for organization only — not separate tasks.
-
-After reading all sections, follow the FINAL INSTRUCTION section.
-Do not repeat or restate the instructions unless explicitly asked.
-
-`;
+    let message = loadPromptPrefix();
     updatedPrompts.forEach((prompt) => {
       // Only include included prompts
       if (!prompt.isIncluded) {

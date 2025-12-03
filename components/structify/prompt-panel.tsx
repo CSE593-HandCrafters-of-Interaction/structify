@@ -22,6 +22,7 @@ import { PROMPT_COLLECT_EVENT, type PromptCollectDetail } from "@/lib/prompt-col
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import type { PromptSet } from "@/lib/localStorage-prompts-adapter";
+import initialPrompts from "@/data/initial.json";
 
 interface PromptPanelProps {
   onWidthChange?: (width: number) => void;
@@ -308,14 +309,20 @@ export function PromptPanel(props: PromptPanelProps) {
   };
 
   const handleStartWithTemplate = () => {
-    // Dummy for now - just create a new prompt set
-    // TODO: Load template prompts
+    const timestamp = Date.now();
+    // Load template prompts from initial.json
+    const templatePrompts = (initialPrompts as PromptItem[]).map((prompt, index) => ({
+      ...prompt,
+      id: `${timestamp}-${index}`,
+      isEditing: false,
+    }));
+    
     const newPromptSet: PromptSet = {
-      id: `prompt-set-${Date.now()}`,
-      title: "Template Prompt Set",
-      prompts: [],
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
+      id: `prompt-set-${timestamp}`,
+      title: "Letter of Condolences",
+      prompts: templatePrompts,
+      createdAt: timestamp,
+      updatedAt: timestamp,
     };
     onUpdatePromptSet(newPromptSet);
   };
@@ -866,7 +873,7 @@ Generate your response and follow all instructions above.`;
                     variant="outline"
                     className="w-full flex items-center justify-center gap-2 rounded-lg border-2 p-4"
                   >
-                    <span>Start with Template</span>
+                    <span>Start with Example</span>
                   </Button>
                 </div>
               </div>

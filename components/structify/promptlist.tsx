@@ -213,10 +213,10 @@ const PromptListItem: FC<{
             <FileTextIcon className="mx-0 size-4 shrink-0" />
             <span className="flex-1 truncate text-sm">{promptSet.title || "Untitled"}</span>
           </Button>
-          <div className="absolute right-0 flex items-center gap-0 pr-1 opacity-0 group-hover/item:opacity-100 transition-opacity pointer-events-none group-hover/item:pointer-events-auto">
+          <div className="absolute right-0 flex items-center gap-0 pr-1 opacity-0 group-hover/item:opacity-80 transition-opacity pointer-events-none group-hover/item:pointer-events-auto bg-gray-100 dark:bg-gray-800 rounded">
             <Button
               onClick={handleEdit}
-              className="size-7 shrink-0 p-1 opacity-60 pointer-events-auto"
+              className="size-7 shrink-0 p-1 opacity-100 pointer-events-auto"
               variant="ghost"
               size="icon"
               title="Edit title"
@@ -225,7 +225,7 @@ const PromptListItem: FC<{
             </Button>
             <Button
               onClick={handleDuplicate}
-              className="size-7 shrink-0 p-1 opacity-60 pointer-events-auto"
+              className="size-7 shrink-0 p-1 opacity-100 pointer-events-auto"
               variant="ghost"
               size="icon"
               title="Duplicate prompt set"
@@ -234,7 +234,7 @@ const PromptListItem: FC<{
             </Button>
             <Button
               onClick={(e) => onDelete(promptSet.id, e)}
-              className="size-7 shrink-0 p-1 opacity-60 pointer-events-auto"
+              className="size-7 shrink-0 p-1 opacity-100 pointer-events-auto"
               variant="ghost"
               size="icon"
               title="Delete prompt set"

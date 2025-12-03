@@ -33,6 +33,7 @@ interface PromptPanelProps {
   onUpdateTitle: (promptSetId: string, title: string) => void;
   onUpdateIncludeState: (promptSetId: string, promptId: string, isIncluded: boolean) => void;
   onUpdateEditingState: (promptSetId: string, promptId: string, isEditing: boolean) => void;
+  shouldOpenWelcome?: boolean;
 }
 
 export type PromptCardContent =
@@ -92,6 +93,7 @@ export function PromptPanel(props: PromptPanelProps) {
     onUpdateTitle,
     onUpdateIncludeState,
     onUpdateEditingState,
+    shouldOpenWelcome,
   } = props;
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
@@ -132,6 +134,13 @@ export function PromptPanel(props: PromptPanelProps) {
     // Don't auto-close when currentPromptSet becomes null - let user close manually
     // This allows showing the empty state view when panel is opened without a prompt set
   }, [currentPromptSet]);
+
+  // Open panel when shouldOpenWelcome is true (to show welcome view)
+  useEffect(() => {
+    if (shouldOpenWelcome) {
+      setIsOpen(true);
+    }
+  }, [shouldOpenWelcome]);
 
   const handleSavePromptSet = useCallback(() => {
     if (!currentPromptSet) return;

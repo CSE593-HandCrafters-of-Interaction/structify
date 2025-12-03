@@ -29,6 +29,7 @@ type ThreadListSidebarProps = React.ComponentProps<typeof Sidebar> & {
   currentPromptSetId?: string | null;
   onClosePanelForEdit?: () => void;
   onReloadPromptSet?: (promptSetId: string) => void;
+  onOpenWelcomeView?: () => void;
 };
 
 export function ThreadListSidebar({
@@ -41,22 +42,15 @@ export function ThreadListSidebar({
   currentPromptSetId,
   onClosePanelForEdit,
   onReloadPromptSet,
+  onOpenWelcomeView,
   ...props
 }: ThreadListSidebarProps) {
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
 
   const handleCreateNew = React.useCallback(() => {
-    const newPromptSet: PromptSet = {
-      id: `prompt-set-${Date.now()}`,
-      title: "New Prompt Set",
-      prompts: [],
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    };
-    savePromptSet(newPromptSet);
-    window.dispatchEvent(new CustomEvent("prompt-set-saved"));
-    onSelectPromptSet?.(newPromptSet);
-  }, [onSelectPromptSet]);
+    // Open the welcome view instead of creating a new prompt set
+    onOpenWelcomeView?.();
+  }, [onOpenWelcomeView]);
 
   const handleImportClick = React.useCallback(() => {
     fileInputRef.current?.click();

@@ -82,6 +82,7 @@ export const Assistant = () => {
   const [structifyFeature, setStructifyFeature] = useState(false);
   const [promptPanelWidth, setPromptPanelWidth] = useState(0);
   const [currentPromptSet, setCurrentPromptSet] = useState<PromptSet | null>(null);
+  const [shouldOpenWelcome, setShouldOpenWelcome] = useState(false);
   const isReloadingRef = useRef(false);
   
   const toggleUserStudyMode = useCallback(() => {
@@ -101,6 +102,18 @@ export const Assistant = () => {
   const handleClosePanelForEdit = useCallback(() => {
     // Clear currentPromptSet to close the panel
     setCurrentPromptSet(null);
+    setShouldOpenWelcome(false);
+  }, []);
+
+  const handleOpenWelcomeView = useCallback(() => {
+    setCurrentPromptSet(null);
+    setShouldOpenWelcome(true);
+    // Reset the flag after the effect has had time to run
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setShouldOpenWelcome(false);
+      });
+    });
   }, []);
 
   const handleReloadPromptSet = useCallback((promptSetId: string) => {
@@ -316,6 +329,7 @@ export const Assistant = () => {
               currentPromptSetId={currentPromptSet?.id ?? null}
               onClosePanelForEdit={handleClosePanelForEdit}
               onReloadPromptSet={handleReloadPromptSet}
+              onOpenWelcomeView={handleOpenWelcomeView}
             />
             <SidebarInset>
               <SidebarExpandTrigger hidden={shouldHideSidebarTrigger} />
@@ -343,6 +357,7 @@ export const Assistant = () => {
                 onUpdateTitle={handleUpdateTitle}
                 onUpdateIncludeState={handleUpdateIncludeState}
                 onUpdateEditingState={handleUpdateEditingState}
+                shouldOpenWelcome={shouldOpenWelcome}
               />
             )}
           </div>

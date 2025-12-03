@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef, ChangeEvent } from "react";
-import { Plus, ArrowLeft, Loader2, Upload, Save, Check } from "lucide-react";
+import { Plus, ArrowLeft, Loader2, Upload, Save, Check, ArrowUpDown } from "lucide-react";
 import { PromptCard } from "./prompt-card";
 import type { SummarySnapshot } from "./prompt-card";
 import { useAssistantApi } from "@assistant-ui/react";
@@ -34,6 +34,7 @@ interface PromptPanelProps {
   onUpdateTitle: (promptSetId: string, title: string) => void;
   onUpdateIncludeState: (promptSetId: string, promptId: string, isIncluded: boolean) => void;
   onUpdateEditingState: (promptSetId: string, promptId: string, isEditing: boolean) => void;
+  onReorderPrompts: (promptSetId: string, newOrder: string[]) => void;
   shouldOpenWelcome?: boolean;
 }
 
@@ -94,12 +95,16 @@ export function PromptPanel(props: PromptPanelProps) {
     onUpdateTitle,
     onUpdateIncludeState,
     onUpdateEditingState,
+    onReorderPrompts,
     shouldOpenWelcome,
   } = props;
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [suggestingCardId, setSuggestingCardId] = useState<string | null>(null);
+  const [isReorderMode, setIsReorderMode] = useState(false);
+  const [draggedPromptId, setDraggedPromptId] = useState<string | null>(null);
+  const [dragOverPromptId, setDragOverPromptId] = useState<string | null>(null);
   const [panelMaxWidth, setPanelMaxWidth] = useState(() => getPanelMaxWidth(isMobile));
   const [panelWidth, setPanelWidth] = useState(() => {
     const maxWidth = getPanelMaxWidth(isMobile);
@@ -570,6 +575,76 @@ Generate your response and follow all instructions above.`;
     onUpdateIncludeState(currentPromptSetId, id, isIncluded);
   };
 
+  const handleToggleReorderMode = () => {
+    setIsReorderMode(prev => {
+      const newMode = !prev;
+      // When entering reorder mode, exit all editing states
+      if (newMode && currentPromptSetId) {
+        prompts.forEach(prompt => {
+          if (prompt.isEditing) {
+            onUpdateEditingState(currentPromptSetId, prompt.id, false);
+          }
+        });
+      }
+      return newMode;
+    });
+    setDraggedPromptId(null);
+    setDragOverPromptId(null);
+  };
+
+  const handleDragStart = (e: React.DragEvent, promptId: string) => {
+    if (!isReorderMode) return;
+    setDraggedPromptId(promptId);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", promptId);
+  };
+
+  const handleDragOver = (e: React.DragEvent, targetPromptId?: string) => {
+    if (!isReorderMode || !draggedPromptId) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (targetPromptId && targetPromptId !== draggedPromptId) {
+      setDragOverPromptId(targetPromptId);
+    }
+  };
+
+  const handleDragLeave = () => {
+    setDragOverPromptId(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, targetPromptId: string) => {
+    if (!isReorderMode || !draggedPromptId || !currentPromptSetId) return;
+    e.preventDefault();
+    setDragOverPromptId(null);
+    
+    if (draggedPromptId === targetPromptId) {
+      setDraggedPromptId(null);
+      return;
+    }
+
+    const currentOrder = prompts.map(p => p.id);
+    const draggedIndex = currentOrder.indexOf(draggedPromptId);
+    const targetIndex = currentOrder.indexOf(targetPromptId);
+
+    if (draggedIndex === -1 || targetIndex === -1) {
+      setDraggedPromptId(null);
+      return;
+    }
+
+    // Create new order array
+    const newOrder = [...currentOrder];
+    newOrder.splice(draggedIndex, 1);
+    newOrder.splice(targetIndex, 0, draggedPromptId);
+
+    onReorderPrompts(currentPromptSetId, newOrder);
+    setDraggedPromptId(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedPromptId(null);
+    setDragOverPromptId(null);
+  };
+
   useEffect(() => {
     if (typeof window === "undefined") {
       return;
@@ -789,40 +864,74 @@ Generate your response and follow all instructions above.`;
                 </SidebarMenu>
               </SidebarHeader>
               <div className="flex-1 overflow-y-auto -pr-3 -mr-3">
-                <div ref={scrollContainerRef} className="space-y-4 mr-3">
+                <div 
+                  ref={scrollContainerRef} 
+                  className="space-y-4 mr-3"
+                >
                   {prompts.map((prompt) => (
                     <PromptCard
                       key={prompt.id}
                       id={prompt.id}
                       title={prompt.title}
                       content={prompt.content}
-                      isEditing={prompt.isEditing}
+                      isEditing={isReorderMode ? false : prompt.isEditing}
                       onDelete={deletePrompt}
                       onUpdate={updatePrompt}
-                      onEditingChange={(isEditing) => updateEditingState(prompt.id, isEditing)}
+                      onEditingChange={(isEditing) => {
+                        if (!isReorderMode) {
+                          updateEditingState(prompt.id, isEditing);
+                        }
+                      }}
                       isIncluded={prompt.isIncluded}
-                      onIncludeChange={(isIncluded) => updateIncludeState(prompt.id, isIncluded)}
+                      onIncludeChange={(isIncluded) => {
+                        if (!isReorderMode) {
+                          updateIncludeState(prompt.id, isIncluded);
+                        }
+                      }}
                       summarySnapshot={prompt.summarySnapshot}
                       onSummarySnapshotChange={updateSummarySnapshot}
                       onSuggest={handleSuggestCard}
                       isSuggesting={suggestingCardId === prompt.id}
                       suggestVersion={prompt.suggestVersion}
+                      isReorderMode={isReorderMode}
+                      isDragged={draggedPromptId === prompt.id}
+                      isDragOver={dragOverPromptId === prompt.id}
+                      onDragStart={(e) => handleDragStart(e, prompt.id)}
+                      onDragOver={(e) => handleDragOver(e, prompt.id)}
+                      onDragLeave={handleDragLeave}
+                      onDrop={(e) => handleDrop(e, prompt.id)}
+                      onDragEnd={handleDragEnd}
                     />
                   ))}
                 </div>
               </div>
 
-              <Button
-                onClick={addPrompt}
-                variant="outline"
-                className="mt-4 flex items-center justify-center rounded-lg border-2 border-dashed border-yellow-400 bg-yellow-50 p-3 text-yellow-700 hover:bg-yellow-100 dark:border-yellow-700 dark:bg-yellow-950/20 dark:text-yellow-200 dark:hover:bg-yellow-900/40"
-              >
-                <Plus className="size-6 text-yellow-600" />
-              </Button>
+              <div className="mt-4 flex items-center gap-2">
+                <Button
+                  onClick={addPrompt}
+                  variant="outline"
+                  disabled={isReorderMode}
+                  className="flex-1 flex items-center justify-center rounded-lg border-2 border-dashed border-yellow-400 bg-yellow-50 p-3 text-yellow-700 hover:bg-yellow-100 dark:border-yellow-700 dark:bg-yellow-950/20 dark:text-yellow-200 dark:hover:bg-yellow-900/40 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Plus className="size-6 text-yellow-600" />
+                </Button>
+                <Button
+                  onClick={handleToggleReorderMode}
+                  variant={isReorderMode ? "default" : "outline"}
+                  className={cn(
+                    "flex items-center justify-center rounded-lg border-2 border-yellow-400 p-3",
+                    isReorderMode
+                      ? "bg-yellow-400 text-yellow-950 hover:bg-yellow-500"
+                      : "bg-yellow-50 text-yellow-700 hover:bg-yellow-100 dark:border-yellow-700 dark:bg-yellow-950/20 dark:text-yellow-200 dark:hover:bg-yellow-900/40"
+                  )}
+                >
+                  <ArrowUpDown className={cn("size-6", isReorderMode ? "text-yellow-950" : "text-yellow-600")} />
+                </Button>
+              </div>
 
               <Button
                 onClick={sendAllPrompts}
-                disabled={isSending || prompts.filter(p => p.isIncluded).length === 0}
+                disabled={isSending || isReorderMode || prompts.filter(p => p.isIncluded).length === 0}
                 className="mt-4 flex items-center justify-center gap-2 rounded-lg bg-yellow-500 p-3 text-white hover:bg-yellow-600 disabled:opacity-50"
               >
                 {isSending ? (

@@ -32,6 +32,14 @@ interface PromptCardProps {
   suggestVersion?: number;
   summarySnapshot?: SummarySnapshot | null;
   onSummarySnapshotChange?: (id: string, snapshot?: SummarySnapshot) => void;
+  isReorderMode?: boolean;
+  isDragged?: boolean;
+  isDragOver?: boolean;
+  onDragStart?: (e: React.DragEvent) => void;
+  onDragOver?: (e: React.DragEvent) => void;
+  onDragLeave?: () => void;
+  onDrop?: (e: React.DragEvent) => void;
+  onDragEnd?: () => void;
 }
 
 export function PromptCard({
@@ -48,7 +56,15 @@ export function PromptCard({
   isSuggesting = false,
   suggestVersion,
   summarySnapshot,
-  onSummarySnapshotChange
+  onSummarySnapshotChange,
+  isReorderMode = false,
+  isDragged = false,
+  isDragOver = false,
+  onDragStart,
+  onDragOver,
+  onDragLeave,
+  onDrop,
+  onDragEnd,
 }: PromptCardProps) {
   const [editTitle, setEditTitle] = useState(title);
   const [editContent, setEditContent] = useState(
@@ -335,11 +351,20 @@ export function PromptCard({
   return (
     <div
       data-prompt-id={id}
+      draggable={isReorderMode}
+      onDragStart={isReorderMode ? onDragStart : undefined}
+      onDragOver={isReorderMode ? onDragOver : undefined}
+      onDragLeave={isReorderMode ? onDragLeave : undefined}
+      onDrop={isReorderMode ? onDrop : undefined}
+      onDragEnd={isReorderMode ? onDragEnd : undefined}
       className={cn(
         "relative rounded-2xl border-2 p-4 transition-colors",
         isIncluded
           ? "border-yellow-400 bg-yellow-50 dark:bg-yellow-950/20 dark:border-yellow-600"
           : "border-yellow-400 border-dashed bg-yellow-50/40 text-gray-500 dark:border-yellow-600/80 dark:bg-yellow-950/10 dark:text-gray-400",
+        isReorderMode && "opacity-60 cursor-move",
+        isDragged && "opacity-30",
+        isDragOver && !isDragged && "opacity-100 border-yellow-600 border-4 shadow-lg",
       )}
     >
       {!isEditing && (
@@ -382,7 +407,10 @@ export function PromptCard({
       )}
 
       <div className={isEditing ? "space-y-2" : "relative"}>
-        <div onClick={!isEditing ? () => onEditingChange?.(true) : undefined} className={!isEditing ? "cursor-pointer" : undefined}>
+        <div 
+          onClick={!isEditing && !isReorderMode ? () => onEditingChange?.(true) : undefined} 
+          className={!isEditing && !isReorderMode ? "cursor-pointer" : undefined}
+        >
           {isEditing ? (
             <Input
               value={editTitle}

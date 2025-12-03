@@ -230,6 +230,30 @@ export const Assistant = () => {
     });
   }, []);
 
+  const handleReorderPrompts = useCallback((promptSetId: string, newOrder: string[]) => {
+    setCurrentPromptSet((prev) => {
+      if (!prev || prev.id !== promptSetId) return prev;
+      
+      // Create a map of prompts by ID for quick lookup
+      const promptMap = new Map(prev.prompts.map(p => [p.id, p]));
+      
+      // Reorder prompts according to newOrder array
+      const reorderedPrompts = newOrder
+        .map(id => promptMap.get(id))
+        .filter((p): p is typeof prev.prompts[0] => p !== undefined);
+      
+      // Add any prompts that weren't in newOrder (shouldn't happen, but safety check)
+      const existingIds = new Set(newOrder);
+      const remainingPrompts = prev.prompts.filter(p => !existingIds.has(p.id));
+      
+      return {
+        ...prev,
+        prompts: [...reorderedPrompts, ...remainingPrompts],
+        updatedAt: Date.now(),
+      };
+    });
+  }, []);
+
   const isMobileViewport = useIsMobile();
   const shouldHideSidebarTrigger = isMobileViewport && promptPanelWidth > 0;
 
@@ -357,6 +381,7 @@ export const Assistant = () => {
                 onUpdateTitle={handleUpdateTitle}
                 onUpdateIncludeState={handleUpdateIncludeState}
                 onUpdateEditingState={handleUpdateEditingState}
+                onReorderPrompts={handleReorderPrompts}
                 shouldOpenWelcome={shouldOpenWelcome}
               />
             )}

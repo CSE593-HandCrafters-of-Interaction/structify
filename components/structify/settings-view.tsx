@@ -117,7 +117,7 @@ export function SettingsView({ open, onOpenChange }: SettingsViewProps) {
                 className="min-h-[100px] font-mono text-sm"
               />
               <p className="text-xs text-muted-foreground mt-2">
-                This text will be appended after all structured prompts with the "[FINAL INSTRUCTION]" header.
+                This text will be appended after all structured prompts with the &quot;[FINAL INSTRUCTION]&quot; header.
               </p>
             </div>
           </div>

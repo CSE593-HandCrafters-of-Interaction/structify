@@ -13,7 +13,7 @@ import {
 import { ThreadList } from "@/components/structify/threadlist";
 import { PromptList } from "@/components/structify/promptlist";
 import { StructifyIcon } from "../logo/structify";
-import { Monitor, FlaskConical, Plus, Download, Upload, Settings } from "lucide-react";
+import { Monitor, FlaskConical, Plus, Upload, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { PromptSet } from "@/lib/localStorage-prompts-adapter";
 import { savePromptSet } from "@/lib/localStorage-prompts-adapter";

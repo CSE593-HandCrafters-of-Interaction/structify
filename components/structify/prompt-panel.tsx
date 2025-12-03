@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef, ChangeEvent } from "react";
-import { Plus, ArrowLeft, Loader2, Upload, Save, Check, ArrowUpDown, Download } from "lucide-react";
+import { useState, useEffect, useCallback, useRef, useMemo, ChangeEvent } from "react";
+import { Plus, ArrowLeft, Loader2, Check, ArrowUpDown, Download } from "lucide-react";
 import { PromptCard } from "./prompt-card";
 import type { SummarySnapshot } from "./prompt-card";
 import { useAssistantApi } from "@assistant-ui/react";

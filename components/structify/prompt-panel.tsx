@@ -125,10 +125,13 @@ export function PromptPanel(props: PromptPanelProps) {
   const [summarySnapshots, setSummarySnapshots] = useState<Map<string, SummarySnapshot>>(new Map());
 
   // Derived state from props
-  const prompts: PromptItem[] = currentPromptSet?.prompts.map(p => ({
-    ...p,
-    summarySnapshot: summarySnapshots.get(p.id),
-  })) ?? [];
+  const prompts: PromptItem[] = useMemo(() => 
+    currentPromptSet?.prompts.map(p => ({
+      ...p,
+      summarySnapshot: summarySnapshots.get(p.id),
+    })) ?? [],
+    [currentPromptSet?.prompts, summarySnapshots]
+  );
   const panelTitle = currentPromptSet?.title ?? "Structured Prompts";
   const currentPromptSetId = currentPromptSet?.id ?? null;
 
@@ -193,9 +196,6 @@ export function PromptPanel(props: PromptPanelProps) {
     URL.revokeObjectURL(url);
   }, [prompts, panelTitle]);
 
-  const handleUploadClick = useCallback(() => {
-    fileInputRef.current?.click();
-  }, []);
 
   const handleImportPrompts = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {

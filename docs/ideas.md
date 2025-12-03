@@ -6,4 +6,10 @@
   - History blame
 - Delete animation like macOS
 
+- Icons:
+  - Collect -> Copy and Collect
+  - x -> Collect
+  - Rewind -> Collect and Delete
+  - Delete -> Delete
+
 Credit goes to fox.

@@ -1,4 +1,5 @@
 const PROMPT_PREFIX_KEY = "structify-prompt-prefix";
+const FINAL_INSTRUCTION_KEY = "structify-final-instruction";
 
 export const DEFAULT_PROMPT_PREFIX = `You will now receive a unified set of structured instructions.
 They are organized into titled sections. Each section contains
@@ -36,6 +37,34 @@ export const savePromptPrefix = (prefix: string): void => {
     localStorage.setItem(PROMPT_PREFIX_KEY, prefix);
   } catch (error) {
     console.error("Failed to save prompt prefix to localStorage:", error);
+  }
+};
+
+export const DEFAULT_FINAL_INSTRUCTION = `Generate your response and follow all instructions above.`;
+
+export const loadFinalInstruction = (): string => {
+  if (typeof window === "undefined") {
+    return DEFAULT_FINAL_INSTRUCTION;
+  }
+
+  try {
+    const stored = localStorage.getItem(FINAL_INSTRUCTION_KEY);
+    return stored || DEFAULT_FINAL_INSTRUCTION;
+  } catch (error) {
+    console.error("Failed to load final instruction from localStorage:", error);
+    return DEFAULT_FINAL_INSTRUCTION;
+  }
+};
+
+export const saveFinalInstruction = (instruction: string): void => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    localStorage.setItem(FINAL_INSTRUCTION_KEY, instruction);
+  } catch (error) {
+    console.error("Failed to save final instruction to localStorage:", error);
   }
 };
 

@@ -369,8 +369,6 @@ type StructuredPromptInlineCard = {
   content: string[];
 };
 
-const STRUCTURED_PROMPT_HEADER =
-  "You will now receive a unified set of structured instructions.";
 const STRUCTURED_PROMPT_FINAL_MARKER = "[FINAL INSTRUCTION]";
 
 const parseStructuredPromptText = (
@@ -378,10 +376,15 @@ const parseStructuredPromptText = (
 ): StructuredPromptInlineCard[] | null => {
   if (!text) return null;
 
-  if (
-    !text.includes(STRUCTURED_PROMPT_HEADER) ||
-    !text.includes(STRUCTURED_PROMPT_FINAL_MARKER)
-  ) {
+  // Check for the FINAL INSTRUCTION marker and bracket sections
+  if (!text.includes(STRUCTURED_PROMPT_FINAL_MARKER)) {
+    return null;
+  }
+
+  // Check if there are any bracket sections (like [Section Title])
+  // This helps identify structured prompts even with customizable prefixes
+  const hasBracketSections = /\[[^\]]+\]/.test(text);
+  if (!hasBracketSections) {
     return null;
   }
 

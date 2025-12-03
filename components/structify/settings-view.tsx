@@ -9,7 +9,7 @@ import {
 import { X, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { loadPromptPrefix, savePromptPrefix, DEFAULT_PROMPT_PREFIX } from "@/lib/localStorage-settings-adapter";
+import { loadPromptPrefix, savePromptPrefix, DEFAULT_PROMPT_PREFIX, loadFinalInstruction, saveFinalInstruction, DEFAULT_FINAL_INSTRUCTION } from "@/lib/localStorage-settings-adapter";
 
 type SettingsViewProps = {
   open: boolean;
@@ -18,10 +18,12 @@ type SettingsViewProps = {
 
 export function SettingsView({ open, onOpenChange }: SettingsViewProps) {
   const [promptPrefix, setPromptPrefix] = React.useState("");
+  const [finalInstruction, setFinalInstruction] = React.useState("");
 
   React.useEffect(() => {
     if (open) {
       setPromptPrefix(loadPromptPrefix());
+      setFinalInstruction(loadFinalInstruction());
     }
   }, [open]);
 
@@ -33,6 +35,16 @@ export function SettingsView({ open, onOpenChange }: SettingsViewProps) {
   const handleResetPromptPrefix = () => {
     setPromptPrefix(DEFAULT_PROMPT_PREFIX);
     savePromptPrefix(DEFAULT_PROMPT_PREFIX);
+  };
+
+  const handleFinalInstructionChange = (value: string) => {
+    setFinalInstruction(value);
+    saveFinalInstruction(value);
+  };
+
+  const handleResetFinalInstruction = () => {
+    setFinalInstruction(DEFAULT_FINAL_INSTRUCTION);
+    saveFinalInstruction(DEFAULT_FINAL_INSTRUCTION);
   };
 
   return (
@@ -80,6 +92,32 @@ export function SettingsView({ open, onOpenChange }: SettingsViewProps) {
               />
               <p className="text-xs text-muted-foreground mt-2">
                 This text will be prepended to all structured prompts when sending them to the assistant.
+              </p>
+            </div>
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label htmlFor="final-instruction" className="text-sm font-medium">
+                  Final Instruction
+                </label>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleResetFinalInstruction}
+                  className="gap-2"
+                >
+                  <RotateCcw className="size-3" />
+                  Reset
+                </Button>
+              </div>
+              <Textarea
+                id="final-instruction"
+                value={finalInstruction}
+                onChange={(e) => handleFinalInstructionChange(e.target.value)}
+                placeholder="Enter the final instruction text..."
+                className="min-h-[100px] font-mono text-sm"
+              />
+              <p className="text-xs text-muted-foreground mt-2">
+                This text will be appended after all structured prompts with the "[FINAL INSTRUCTION]" header.
               </p>
             </div>
           </div>

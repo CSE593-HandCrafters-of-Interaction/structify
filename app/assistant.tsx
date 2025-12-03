@@ -19,7 +19,8 @@ import { PANEL_SLIDE_DURATION_MS } from "@/components/ui/panel";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { loadChatHistory, saveChatHistory, clearChatHistory } from "@/lib/localStorage-history-adapter";
 import type { PromptSet } from "@/lib/localStorage-prompts-adapter";
-import { loadPromptSets } from "@/lib/localStorage-prompts-adapter";
+import { loadPromptSets, savePromptSet } from "@/lib/localStorage-prompts-adapter";
+import type { PromptCardContent } from "@/components/structify/prompt-panel";
 
 type AssistantThreadMessage = UIMessage & {
   content: string;
@@ -80,8 +81,7 @@ export const Assistant = () => {
   const [isSendingCinematic, setIsSendingCinematic] = useState(false);
   const [structifyFeature, setStructifyFeature] = useState(false);
   const [promptPanelWidth, setPromptPanelWidth] = useState(0);
-  const [selectedPromptSet, setSelectedPromptSet] = useState<PromptSet | null>(null);
-  const [currentPromptSetId, setCurrentPromptSetId] = useState<string | null>(null);
+  const [currentPromptSet, setCurrentPromptSet] = useState<PromptSet | null>(null);
   const isReloadingRef = useRef(false);
   
   const toggleUserStudyMode = useCallback(() => {
@@ -95,21 +95,12 @@ export const Assistant = () => {
   }, [chat]);
 
   const handleSelectPromptSet = useCallback((promptSet: PromptSet) => {
-    setSelectedPromptSet(promptSet);
-    setCurrentPromptSetId(promptSet.id);
-  }, []);
-
-  const handlePromptSetLoaded = useCallback(() => {
-    // Don't clear if we're reloading - we want to keep it open
-    if (!isReloadingRef.current) {
-      setSelectedPromptSet(null);
-    }
-    isReloadingRef.current = false;
+    setCurrentPromptSet(promptSet);
   }, []);
 
   const handleClosePanelForEdit = useCallback(() => {
-    // Don't clear currentPromptSetId - we need it to reload after editing
-    setSelectedPromptSet(null);
+    // Clear currentPromptSet to close the panel
+    setCurrentPromptSet(null);
   }, []);
 
   const handleReloadPromptSet = useCallback((promptSetId: string) => {
@@ -118,11 +109,101 @@ export const Assistant = () => {
       const promptSets = loadPromptSets();
       const updatedPromptSet = promptSets.find(p => p.id === promptSetId);
       if (updatedPromptSet) {
-        setSelectedPromptSet(updatedPromptSet);
-        setCurrentPromptSetId(promptSetId);
+        setCurrentPromptSet(updatedPromptSet);
+      } else {
+        // Prompt set was deleted, clear it
+        setCurrentPromptSet(null);
       }
+      isReloadingRef.current = false;
     }
   }, []);
+
+  // Save prompt set to localStorage whenever it changes
+  useEffect(() => {
+    if (currentPromptSet && typeof window !== "undefined") {
+      savePromptSet(currentPromptSet);
+      window.dispatchEvent(new CustomEvent("prompt-set-saved"));
+    }
+  }, [currentPromptSet]);
+
+  // Callback handlers for PromptPanel
+  const handleUpdatePromptSet = useCallback((promptSet: PromptSet) => {
+    setCurrentPromptSet(promptSet);
+  }, []);
+
+  const handleAddPrompt = useCallback((promptSetId: string) => {
+    if (!currentPromptSet || currentPromptSet.id !== promptSetId) return;
+    
+    const newPrompt = {
+      id: Date.now().toString(),
+      title: "",
+      content: { type: "bullet" as const, items: [] },
+      isEditing: false,
+      isIncluded: true,
+    };
+    
+    setCurrentPromptSet({
+      ...currentPromptSet,
+      prompts: [...currentPromptSet.prompts, newPrompt],
+      updatedAt: Date.now(),
+    });
+  }, [currentPromptSet]);
+
+  const handleDeletePrompt = useCallback((promptSetId: string, promptId: string) => {
+    if (!currentPromptSet || currentPromptSet.id !== promptSetId) return;
+    
+    setCurrentPromptSet({
+      ...currentPromptSet,
+      prompts: currentPromptSet.prompts.filter(p => p.id !== promptId),
+      updatedAt: Date.now(),
+    });
+  }, [currentPromptSet]);
+
+  const handleUpdatePrompt = useCallback((promptSetId: string, promptId: string, data: { title: string; content: PromptCardContent }) => {
+    if (!currentPromptSet || currentPromptSet.id !== promptSetId) return;
+    
+    setCurrentPromptSet({
+      ...currentPromptSet,
+      prompts: currentPromptSet.prompts.map(p => 
+        p.id === promptId ? { ...p, title: data.title, content: data.content } : p
+      ),
+      updatedAt: Date.now(),
+    });
+  }, [currentPromptSet]);
+
+  const handleUpdateTitle = useCallback((promptSetId: string, title: string) => {
+    if (!currentPromptSet || currentPromptSet.id !== promptSetId) return;
+    
+    setCurrentPromptSet({
+      ...currentPromptSet,
+      title,
+      updatedAt: Date.now(),
+    });
+  }, [currentPromptSet]);
+
+  const handleUpdateIncludeState = useCallback((promptSetId: string, promptId: string, isIncluded: boolean) => {
+    if (!currentPromptSet || currentPromptSet.id !== promptSetId) return;
+    
+    setCurrentPromptSet({
+      ...currentPromptSet,
+      prompts: currentPromptSet.prompts.map(p => 
+        p.id === promptId ? { ...p, isIncluded } : p
+      ),
+      updatedAt: Date.now(),
+    });
+  }, [currentPromptSet]);
+
+  const handleUpdateEditingState = useCallback((promptSetId: string, promptId: string, isEditing: boolean) => {
+    if (!currentPromptSet || currentPromptSet.id !== promptSetId) return;
+    
+    setCurrentPromptSet({
+      ...currentPromptSet,
+      prompts: currentPromptSet.prompts.map(p => 
+        p.id === promptId ? { ...p, isEditing } : p
+      ),
+      updatedAt: Date.now(),
+    });
+  }, [currentPromptSet]);
 
   const isMobileViewport = useIsMobile();
   const shouldHideSidebarTrigger = isMobileViewport && promptPanelWidth > 0;
@@ -220,7 +301,7 @@ export const Assistant = () => {
               onToggleUserStudyMode={toggleUserStudyMode}
               onClearHistory={handleClearHistory}
               onSelectPromptSet={handleSelectPromptSet}
-              currentPromptSetId={currentPromptSetId}
+              currentPromptSetId={currentPromptSet?.id ?? null}
               onClosePanelForEdit={handleClosePanelForEdit}
               onReloadPromptSet={handleReloadPromptSet}
             />
@@ -242,9 +323,14 @@ export const Assistant = () => {
             {structifyFeature && (
               <PromptPanel 
                 onWidthChange={setPromptPanelWidth}
-                promptSetToLoad={selectedPromptSet}
-                onPromptSetLoaded={handlePromptSetLoaded}
-                currentPromptSetId={currentPromptSetId}
+                currentPromptSet={currentPromptSet}
+                onUpdatePromptSet={handleUpdatePromptSet}
+                onAddPrompt={handleAddPrompt}
+                onDeletePrompt={handleDeletePrompt}
+                onUpdatePrompt={handleUpdatePrompt}
+                onUpdateTitle={handleUpdateTitle}
+                onUpdateIncludeState={handleUpdateIncludeState}
+                onUpdateEditingState={handleUpdateEditingState}
               />
             )}
           </div>

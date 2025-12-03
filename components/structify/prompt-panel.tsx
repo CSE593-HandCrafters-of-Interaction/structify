@@ -758,8 +758,8 @@ Generate your response and follow all instructions above.`;
             setPanelWidth(clampPanelWidth(nextWidth, panelMaxWidth))
           }
         />
-        <div className="flex h-full flex-col px-4 pb-4 pt-2">
-          <SidebarHeader className="flex items-center gap-2 px-0 pb-4">
+        <div className="flex h-full flex-col px-4 pb-4 pt-0">
+          <SidebarHeader className="flex items-center gap-2 px-0 pb-2">
             <SidebarMenu className="flex-row items-center gap-2">
               <SidebarMenuItem className="w-auto">
                 <PanelTrigger
@@ -811,7 +811,7 @@ Generate your response and follow all instructions above.`;
                           panelTitleInputRef.current?.blur();
                         }, 100);
                       }}
-                      className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
                       title="Save title"
                     >
                       <Check className="h-4 w-4" />

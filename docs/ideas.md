@@ -1,12 +1,12 @@
 # Design Idea Database
 
-- Reorder cards
+- [x] Reorder cards
 - Rewind functionality impl. and icon change
   - Separate cards
   - History blame
 - Delete animation like macOS
 
-- Icons:
+- [x] Icons:
   - Collect -> Copy and Collect
   - x -> Collect
   - Rewind -> Collect and Delete

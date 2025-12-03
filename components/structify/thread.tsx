@@ -32,7 +32,7 @@ import type {
   ThreadUserMessagePart,
 } from "@assistant-ui/react";
 
-import { type FC, useCallback, useMemo, createContext, useContext } from "react";
+import { type FC, useCallback, useMemo, createContext, useContext, useState } from "react";
 import { LazyMotion, MotionConfig, domAnimation } from "motion/react";
 import * as m from "motion/react-m";
 
@@ -286,23 +286,21 @@ const AssistantActionBar: FC = () => {
       autohideFloat="single-branch"
       className="aui-assistant-action-bar-root col-start-3 row-start-2 -ml-1 flex gap-1 text-muted-foreground data-floating:absolute data-floating:rounded-md data-floating:border data-floating:bg-background data-floating:p-1 data-floating:shadow-sm"
     >
+      {!structifyFeature && (
+        <ActionBarPrimitive.Copy asChild>
+          <TooltipIconButton tooltip="Copy">
+            <CopyIcon />
+          </TooltipIconButton>
+        </ActionBarPrimitive.Copy>
+      )}
       {structifyFeature && (
         <>
+          <CopyAndCollectButton className="aui-assistant-action-copy-and-collect size-6 p-1.5" />
           <CollectPromptButton className="aui-assistant-action-collect size-6 p-1.5" />
-          <RewindButton />
+          <CollectAndDeleteRoundButton />
         </>
       )}
       <DeleteRoundButton />
-      <ActionBarPrimitive.Copy asChild>
-        <TooltipIconButton tooltip="Copy">
-          <MessagePrimitive.If copied>
-            <CheckIcon />
-          </MessagePrimitive.If>
-          <MessagePrimitive.If copied={false}>
-            <CopyIcon />
-          </MessagePrimitive.If>
-        </TooltipIconButton>
-      </ActionBarPrimitive.Copy>
       <ActionBarPrimitive.Reload asChild>
         <TooltipIconButton tooltip="Refresh">
           <RefreshCwIcon />
@@ -546,6 +544,82 @@ const CollectPromptButton: FC<CollectPromptButtonProps> = ({ className }) => {
   );
 };
 
+const CopyAndCollectButton: FC<{ className?: string }> = ({ className }) => {
+  const message = useAssistantState(({ message }) => message);
+  const [isCopied, setIsCopied] = useState(false);
+
+  const collectableLines = useMemo(() => {
+    const splitLines = (text: string | undefined) =>
+      (text ?? "")
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter(Boolean);
+
+    if (message.role === "user") {
+      return (message.content as ThreadUserMessagePart[])
+        .flatMap((part) => {
+          if (part.type !== "text" || !part.text) {
+            return [];
+          }
+
+          return splitLines(part.text);
+        });
+    }
+
+    if (message.role === "assistant") {
+      return (message.content as ThreadAssistantMessagePart[])
+        .flatMap((part) => {
+          if (part.type === "text" || part.type === "reasoning") {
+            return splitLines(part.text);
+          }
+
+          return [];
+        });
+    }
+
+    return [];
+  }, [message.content, message.role]);
+
+  const canCollect = collectableLines.length > 0;
+  const textToCopy = collectableLines.join("\n");
+
+  const handleCopyAndCollect = useCallback(() => {
+    if (!canCollect || !textToCopy) {
+      return;
+    }
+
+    // Copy to clipboard
+    navigator.clipboard.writeText(textToCopy).then(() => {
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 3000);
+    });
+
+    // Collect
+    const title = "";
+    dispatchPromptCollect({
+      messageId: message.id,
+      title,
+      content: collectableLines,
+    });
+  }, [canCollect, textToCopy, message.id, collectableLines]);
+
+  if (message.role !== "user" && message.role !== "assistant") {
+    return null;
+  }
+
+  return (
+    <TooltipIconButton
+      tooltip="Copy and collect"
+      aria-label="Copy and collect"
+      onClick={handleCopyAndCollect}
+      disabled={!canCollect}
+      className={cn("aui-copy-and-collect-button", className)}
+    >
+      {isCopied ? <CheckIcon className="size-4" /> : <CopyIcon className="size-4" />}
+    </TooltipIconButton>
+  );
+};
+
 type AssistantMessageState = Extract<ThreadMessage, { role: "assistant" }>;
 type UserMessageState = Extract<ThreadMessage, { role: "user" }>;
 
@@ -761,11 +835,11 @@ const useRoundActionEligibility = () => {
   return { message, canAct, isAssistantMessage };
 };
 
-const RewindButton: FC = () => {
+const CollectAndDeleteRoundButton: FC = () => {
   const api = useAssistantApi();
   const { message, canAct, isAssistantMessage } = useLastRoundActionEligibility();
 
-  const handleRewind = useCallback(() => {
+  const handleCollectAndDelete = useCallback(() => {
     if (!canAct || !isAssistantMessage) {
       return;
     }
@@ -798,10 +872,10 @@ const RewindButton: FC = () => {
 
   return (
     <TooltipIconButton
-      tooltip="Rewind last round"
-      aria-label="Rewind last round"
+      tooltip="Collect and delete round"
+      aria-label="Collect and delete round"
       className="aui-assistant-action-rewind size-6 p-1.5"
-      onClick={handleRewind}
+      onClick={handleCollectAndDelete}
       disabled={!canAct}
     >
       <RotateCcwIcon />

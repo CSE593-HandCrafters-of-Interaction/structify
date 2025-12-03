@@ -1,5 +1,5 @@
 import React, { type FC } from "react";
-import { FileTextIcon, Trash2Icon, Edit2Icon, CheckIcon, XIcon } from "lucide-react";
+import { FileTextIcon, Trash2Icon, Edit2Icon, CheckIcon, XIcon, CopyPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { PromptSet } from "@/lib/localStorage-prompts-adapter";
@@ -59,6 +59,23 @@ export const PromptList: FC<PromptListProps> = ({
     }
   };
 
+  const handleDuplicate = (promptSet: PromptSet) => {
+    const timestamp = Date.now();
+    const duplicatedPromptSet: PromptSet = {
+      ...promptSet,
+      id: `prompt-set-${timestamp}`,
+      title: `${promptSet.title} (Copy)`,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      prompts: promptSet.prompts.map((prompt, index) => ({
+        ...prompt,
+        id: `${timestamp}-${index}`,
+      })),
+    };
+    savePromptSet(duplicatedPromptSet);
+    setPromptSets(loadPromptSets());
+  };
+
   if (promptSets.length === 0) {
     return (
       <div className="flex flex-col items-stretch gap-1.5">
@@ -77,6 +94,7 @@ export const PromptList: FC<PromptListProps> = ({
           promptSet={promptSet}
           onSelect={handleSelect}
           onDelete={handleDelete}
+          onDuplicate={handleDuplicate}
           onUpdate={handleUpdate}
           currentPromptSetId={currentPromptSetId}
           onClosePanelForEdit={onClosePanelForEdit}
@@ -90,10 +108,11 @@ const PromptListItem: FC<{
   promptSet: PromptSet;
   onSelect: (promptSet: PromptSet) => void;
   onDelete: (id: string, e: React.MouseEvent) => void;
+  onDuplicate: (promptSet: PromptSet) => void;
   onUpdate: (promptSet: PromptSet) => void;
   currentPromptSetId?: string | null;
   onClosePanelForEdit?: () => void;
-}> = ({ promptSet, onSelect, onDelete, onUpdate, currentPromptSetId, onClosePanelForEdit }) => {
+}> = ({ promptSet, onSelect, onDelete, onDuplicate, onUpdate, currentPromptSetId, onClosePanelForEdit }) => {
   const [isEditing, setIsEditing] = React.useState(false);
   const [editedTitle, setEditedTitle] = React.useState(promptSet.title || "Untitled");
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -113,6 +132,11 @@ const PromptListItem: FC<{
     }
     setIsEditing(true);
     setEditedTitle(promptSet.title || "Untitled");
+  };
+
+  const handleDuplicate = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onDuplicate(promptSet);
   };
 
   const handleSave = (e?: React.MouseEvent | React.KeyboardEvent) => {
@@ -198,6 +222,15 @@ const PromptListItem: FC<{
               title="Edit title"
             >
               <Edit2Icon className="size-4" />
+            </Button>
+            <Button
+              onClick={handleDuplicate}
+              className="size-7 shrink-0 p-1 opacity-60 pointer-events-auto"
+              variant="ghost"
+              size="icon"
+              title="Duplicate prompt set"
+            >
+              <CopyPlus className="size-4" />
             </Button>
             <Button
               onClick={(e) => onDelete(promptSet.id, e)}

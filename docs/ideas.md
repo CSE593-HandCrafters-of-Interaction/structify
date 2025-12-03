@@ -5,6 +5,7 @@
   - Separate cards
   - History blame
 - Delete animation like macOS
+- Polish mobile experience
 
 - [x] Icons:
   - Collect -> Copy and Collect

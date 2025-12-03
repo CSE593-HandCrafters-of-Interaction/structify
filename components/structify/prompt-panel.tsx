@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef, ChangeEvent } from "react";
-import { Plus, ArrowLeft, Loader2, Upload, Save, Check, ArrowUpDown } from "lucide-react";
+import { Plus, ArrowLeft, Loader2, Upload, Save, Check, ArrowUpDown, Download } from "lucide-react";
 import { PromptCard } from "./prompt-card";
 import type { SummarySnapshot } from "./prompt-card";
 import { useAssistantApi } from "@assistant-ui/react";
 import { Button } from "../ui/button";
+import { Tooltip, TooltipTrigger, TooltipContent } from "../ui/tooltip";
 import {
   SidebarHeader,
   SidebarMenu,
@@ -153,7 +154,7 @@ export function PromptPanel(props: PromptPanelProps) {
     
     onUpdatePromptSet({
       ...currentPromptSet,
-      title: panelTitle || "Structured Prompts",
+      title: panelTitle || "Untitled",
       prompts: prompts.map((p) => ({
         id: p.id,
         title: p.title,
@@ -840,26 +841,22 @@ Generate your response and follow all instructions above.`;
                   </SidebarMenuItem>
 
                   <SidebarMenuItem className="ml-auto flex items-center gap-1">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={handleSavePromptSet}
-                      title="Save"
-                      className="h-7 w-7"
-                    >
-                      <Save className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={handleExportPrompts}
-                      title="Export"
-                      className="h-7 w-7"
-                    >
-                      <Upload className="h-3.5 w-3.5" />
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={handleExportPrompts}
+                          className="h-7 w-7"
+                        >
+                          <Download className="h-3.5 w-3.5" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">
+                        Export
+                      </TooltipContent>
+                    </Tooltip>
                   </SidebarMenuItem>
                 </SidebarMenu>
               </SidebarHeader>

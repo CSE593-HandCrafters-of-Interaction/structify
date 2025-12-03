@@ -13,7 +13,7 @@ import {
 import { ThreadList } from "@/components/structify/threadlist";
 import { PromptList } from "@/components/structify/promptlist";
 import { StructifyIcon } from "../logo/structify";
-import { Monitor, FlaskConical, Plus, Download } from "lucide-react";
+import { Monitor, FlaskConical, Plus, Download, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { PromptSet } from "@/lib/localStorage-prompts-adapter";
 import { savePromptSet } from "@/lib/localStorage-prompts-adapter";
@@ -220,7 +220,7 @@ export function ThreadListSidebar({
                   variant="ghost"
                   className="flex-1 flex items-center justify-center gap-1 rounded-lg px-2.5 py-2 text-center hover:bg-muted"
                 >
-                  <Download className="size-4" />
+                  <Upload className="size-4" />
                   Import
                 </Button>
               </div>

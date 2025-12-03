@@ -546,25 +546,7 @@ Generate your response and follow all instructions above.`;
   const updateEditingState = (id: string, isEditing: boolean) => {
     if (!currentPromptSetId) return;
     onUpdateEditingState(currentPromptSetId, id, isEditing);
-    
-    // Auto-save when finishing editing (isEditing becomes false) and there's a current prompt set
-    if (!isEditing && currentPromptSet) {
-      const updatedPrompts = prompts.map(p => p.id === id ? { ...p, isEditing: false } : { ...p, isEditing: false });
-      setTimeout(() => {
-        onUpdatePromptSet({
-          ...currentPromptSet,
-          title: panelTitle || "Structured Prompts",
-          prompts: updatedPrompts.map((p) => ({
-            id: p.id,
-            title: p.title,
-            content: p.content,
-            isIncluded: p.isIncluded,
-            isEditing: false,
-          })),
-          updatedAt: Date.now(),
-        });
-      }, 0);
-    }
+    // Note: Auto-save is handled by the save effect in assistant.tsx when currentPromptSet changes
   };
 
   const updateIncludeState = (id: string, isIncluded: boolean) => {

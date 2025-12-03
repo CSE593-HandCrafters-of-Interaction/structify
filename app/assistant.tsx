@@ -132,78 +132,90 @@ export const Assistant = () => {
   }, []);
 
   const handleAddPrompt = useCallback((promptSetId: string) => {
-    if (!currentPromptSet || currentPromptSet.id !== promptSetId) return;
-    
-    const newPrompt = {
-      id: Date.now().toString(),
-      title: "",
-      content: { type: "bullet" as const, items: [] },
-      isEditing: false,
-      isIncluded: true,
-    };
-    
-    setCurrentPromptSet({
-      ...currentPromptSet,
-      prompts: [...currentPromptSet.prompts, newPrompt],
-      updatedAt: Date.now(),
+    setCurrentPromptSet((prev) => {
+      if (!prev || prev.id !== promptSetId) return prev;
+      
+      const newPrompt = {
+        id: Date.now().toString(),
+        title: "",
+        content: { type: "bullet" as const, items: [] },
+        isEditing: false,
+        isIncluded: true,
+      };
+      
+      return {
+        ...prev,
+        prompts: [...prev.prompts, newPrompt],
+        updatedAt: Date.now(),
+      };
     });
-  }, [currentPromptSet]);
+  }, []);
 
   const handleDeletePrompt = useCallback((promptSetId: string, promptId: string) => {
-    if (!currentPromptSet || currentPromptSet.id !== promptSetId) return;
-    
-    setCurrentPromptSet({
-      ...currentPromptSet,
-      prompts: currentPromptSet.prompts.filter(p => p.id !== promptId),
-      updatedAt: Date.now(),
+    setCurrentPromptSet((prev) => {
+      if (!prev || prev.id !== promptSetId) return prev;
+      
+      return {
+        ...prev,
+        prompts: prev.prompts.filter(p => p.id !== promptId),
+        updatedAt: Date.now(),
+      };
     });
-  }, [currentPromptSet]);
+  }, []);
 
   const handleUpdatePrompt = useCallback((promptSetId: string, promptId: string, data: { title: string; content: PromptCardContent }) => {
-    if (!currentPromptSet || currentPromptSet.id !== promptSetId) return;
-    
-    setCurrentPromptSet({
-      ...currentPromptSet,
-      prompts: currentPromptSet.prompts.map(p => 
-        p.id === promptId ? { ...p, title: data.title, content: data.content } : p
-      ),
-      updatedAt: Date.now(),
+    setCurrentPromptSet((prev) => {
+      if (!prev || prev.id !== promptSetId) return prev;
+      
+      return {
+        ...prev,
+        prompts: prev.prompts.map(p => 
+          p.id === promptId ? { ...p, title: data.title, content: data.content } : p
+        ),
+        updatedAt: Date.now(),
+      };
     });
-  }, [currentPromptSet]);
+  }, []);
 
   const handleUpdateTitle = useCallback((promptSetId: string, title: string) => {
-    if (!currentPromptSet || currentPromptSet.id !== promptSetId) return;
-    
-    setCurrentPromptSet({
-      ...currentPromptSet,
-      title,
-      updatedAt: Date.now(),
+    setCurrentPromptSet((prev) => {
+      if (!prev || prev.id !== promptSetId) return prev;
+      
+      return {
+        ...prev,
+        title,
+        updatedAt: Date.now(),
+      };
     });
-  }, [currentPromptSet]);
+  }, []);
 
   const handleUpdateIncludeState = useCallback((promptSetId: string, promptId: string, isIncluded: boolean) => {
-    if (!currentPromptSet || currentPromptSet.id !== promptSetId) return;
-    
-    setCurrentPromptSet({
-      ...currentPromptSet,
-      prompts: currentPromptSet.prompts.map(p => 
-        p.id === promptId ? { ...p, isIncluded } : p
-      ),
-      updatedAt: Date.now(),
+    setCurrentPromptSet((prev) => {
+      if (!prev || prev.id !== promptSetId) return prev;
+      
+      return {
+        ...prev,
+        prompts: prev.prompts.map(p => 
+          p.id === promptId ? { ...p, isIncluded } : p
+        ),
+        updatedAt: Date.now(),
+      };
     });
-  }, [currentPromptSet]);
+  }, []);
 
   const handleUpdateEditingState = useCallback((promptSetId: string, promptId: string, isEditing: boolean) => {
-    if (!currentPromptSet || currentPromptSet.id !== promptSetId) return;
-    
-    setCurrentPromptSet({
-      ...currentPromptSet,
-      prompts: currentPromptSet.prompts.map(p => 
-        p.id === promptId ? { ...p, isEditing } : p
-      ),
-      updatedAt: Date.now(),
+    setCurrentPromptSet((prev) => {
+      if (!prev || prev.id !== promptSetId) return prev;
+      
+      return {
+        ...prev,
+        prompts: prev.prompts.map(p => 
+          p.id === promptId ? { ...p, isEditing } : p
+        ),
+        updatedAt: Date.now(),
+      };
     });
-  }, [currentPromptSet]);
+  }, []);
 
   const isMobileViewport = useIsMobile();
   const shouldHideSidebarTrigger = isMobileViewport && promptPanelWidth > 0;

@@ -13,7 +13,7 @@ import {
   SidebarInset,
   SidebarProvider,
 } from "@/components/ui/sidebar";
-import { ThreadListSidebar } from "@/components/structify/threadlist-sidebar";
+import { ThreadListSidebar } from "@/components/structify/sidebar";
 import { PromptPanel } from "@/components/structify/prompt-panel";
 import { PANEL_SLIDE_DURATION_MS } from "@/components/ui/panel";
 import { useIsMobile } from "@/hooks/use-mobile";

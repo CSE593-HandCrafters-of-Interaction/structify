@@ -943,7 +943,7 @@ ${loadFinalInstruction()}`;
                   <SidebarMenuItem className="flex-1 min-w-0">
                     <SidebarMenuButton
                       size="lg"
-                      className="w-full justify-start px-0 font-semibold"
+                      className="w-full justify-start px-3 font-semibold text-lg"
                     >
                       Get Started
                     </SidebarMenuButton>

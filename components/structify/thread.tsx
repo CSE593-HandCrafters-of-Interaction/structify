@@ -4,9 +4,13 @@ import {
   CheckIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  ClipboardPaste,
   CopyIcon,
+  Database,
+  DatabaseBackup,
   InboxIcon,
   Loader2Icon,
+  LogInIcon,
   PencilIcon,
   PlayIcon,
   RefreshCwIcon,
@@ -539,7 +543,7 @@ const CollectPromptButton: FC<CollectPromptButtonProps> = ({ className }) => {
       disabled={!canCollect}
       className={cn("aui-collect-prompt-button", className)}
     >
-      <InboxIcon className="size-4" />
+      <Database className="size-4" />
     </TooltipIconButton>
   );
 };
@@ -878,7 +882,7 @@ const CollectAndDeleteRoundButton: FC = () => {
       onClick={handleCollectAndDelete}
       disabled={!canAct}
     >
-      <RotateCcwIcon />
+      <DatabaseBackup />
     </TooltipIconButton>
   );
 };

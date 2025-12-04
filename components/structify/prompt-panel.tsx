@@ -568,21 +568,21 @@ ${loadFinalInstruction()}`;
   };
 
   const handleToggleReorderMode = () => {
-    setIsReorderMode(prev => {
-      const newMode = !prev;
-      // When entering reorder mode, exit all editing states
-      if (newMode && currentPromptSetId) {
-        prompts.forEach(prompt => {
-          if (prompt.isEditing) {
-            onUpdateEditingState(currentPromptSetId, prompt.id, false);
-          }
-        });
-      }
-      return newMode;
-    });
+    setIsReorderMode(prev => !prev);
     setDraggedPromptId(null);
     setDragOverPromptId(null);
   };
+
+  // Exit all editing states when entering reorder mode
+  useEffect(() => {
+    if (isReorderMode && currentPromptSetId) {
+      prompts.forEach(prompt => {
+        if (prompt.isEditing) {
+          onUpdateEditingState(currentPromptSetId, prompt.id, false);
+        }
+      });
+    }
+  }, [isReorderMode, currentPromptSetId, prompts, onUpdateEditingState]);
 
   const handleDragStart = (e: React.DragEvent, promptId: string) => {
     if (!isReorderMode) return;

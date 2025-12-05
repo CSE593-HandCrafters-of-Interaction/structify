@@ -31,6 +31,19 @@ export function SettingsView({ open, onOpenChange }: SettingsViewProps) {
     }
   }, [open]);
 
+  React.useEffect(() => {
+    if (!open) return;
+
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onOpenChange(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [open, onOpenChange]);
+
   const handlePromptPrefixChange = (value: string) => {
     setPromptPrefix(value);
     savePromptPrefix(value);

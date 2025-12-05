@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import type { MouseEvent } from "react";
-import { X, Pencil, Loader2, EyeOff, Eye, Undo2, Maximize2, Minimize2, Check } from "lucide-react";
+import { X, Pencil, Loader2, EyeOff, Eye, Maximize2, Minimize2, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -171,59 +171,40 @@ export function PromptCard({
     }
   };
 
-  const handleUndoSummary = () => {
-    if (!summarySnapshot) return;
-
-    const { previousTitle, previousContent } = summarySnapshot;
-    onUpdate?.(id, { title: previousTitle, content: previousContent });
-    setEditTitle(previousTitle);
-
-    if (previousContent.type === "bullet") {
-      setEditContent(previousContent.items.join("\n"));
-    } else {
-      // setEditContent(`${previousContent.value}`);
-    }
-
-    onSummarySnapshotChange?.(id);
-  };
-
   const renderSummarizeUndoButton = (className?: string) => {
     if (!isEditing) return null;
     if (!content || content.type !== "bullet") return null;
     const hasContent = isEditing ? normalizeContent(editContent).length > 0 : content.items.length > 0;
     const hasSnapshot = !!summarySnapshot;
 
+    // Don't show button if there's a snapshot (undo functionality removed)
+    if (hasSnapshot) return null;
+
     return (
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
             type="button"
-            variant={hasSnapshot ? "outline" : "secondary"}
+            variant="secondary"
             onClick={(e) => {
               e.stopPropagation();
-              if (hasSnapshot) {
-                handleUndoSummary();
-              } else {
-                handleSummarize();
-              }
+              handleSummarize();
             }}
-            disabled={isSummarizing || (!hasSnapshot && !hasContent)}
+            disabled={isSummarizing || !hasContent}
             className={cn(
-              hasSnapshot
-                ? "h-auto rounded-full px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
-                : "h-auto rounded-full bg-yellow-100 px-3 py-1 text-sm font-medium text-yellow-900 hover:bg-yellow-200 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-yellow-900/30 dark:text-yellow-200 dark:hover:bg-yellow-900/50",
+              "h-auto rounded-full bg-yellow-100 px-3 py-1 text-sm font-medium text-yellow-900 hover:bg-yellow-200 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-yellow-900/30 dark:text-yellow-200 dark:hover:bg-yellow-900/50",
               className,
             )}
           >
             {isSummarizing ? (
               <Loader2 className="size-4 animate-spin" />
             ) : (
-              hasSnapshot ? <Undo2 className="size-4" /> : <Minimize2 className="size-4" />
+              <Minimize2 className="size-4" />
             )}
           </Button>
         </TooltipTrigger>
         <TooltipContent side="bottom">
-          {hasSnapshot ? "Undo Summarize" : "Summarize"}
+          Summarize
         </TooltipContent>
       </Tooltip>
     );

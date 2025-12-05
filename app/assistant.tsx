@@ -96,6 +96,67 @@ export const Assistant = () => {
     }
   }, [chat.messages]);
 
+  // Intercept fetch calls to catch API key errors before they reach the transport
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const originalFetch = window.fetch;
+    const alertShownRef = { current: false };
+
+    window.fetch = async function(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+      const response = await originalFetch(input, init);
+      
+      // Check for API key errors in chat API responses
+      const url = typeof input === "string" ? input : input instanceof URL ? input.href : (input as Request).url;
+      if (!response.ok && url.includes("/api/chat") && !alertShownRef.current) {
+        const contentType = response.headers.get("content-type");
+        if (contentType?.includes("application/json")) {
+          try {
+            const clonedResponse = response.clone();
+            const errorData = await clonedResponse.json();
+            const errorMessage = errorData?.error;
+            if (errorMessage && (errorMessage.includes("API key") || errorMessage.includes("not configured"))) {
+              alertShownRef.current = true;
+              setTimeout(() => {
+                alert(`API key error: ${errorMessage}\n\nPlease configure your API key in Settings.`);
+                // Reset after a delay to allow showing again if user tries again
+                setTimeout(() => {
+                  alertShownRef.current = false;
+                }, 2000);
+              }, 100);
+            }
+          } catch {
+            // Ignore JSON parse errors
+          }
+        }
+      }
+      
+      return response;
+    };
+
+    return () => {
+      window.fetch = originalFetch;
+    };
+  }, []);
+
+  // Monitor for API key errors in chat messages
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    // Check the last assistant message for errors
+    const lastMessage = chat.messages[chat.messages.length - 1];
+    if (lastMessage?.role === "assistant") {
+      // Check if there's an error in the message
+      const messageError = (lastMessage as any)?.error;
+      if (messageError) {
+        const errorText = typeof messageError === "string" ? messageError : messageError?.message || String(messageError);
+        if (errorText.includes("API key") || errorText.includes("not configured")) {
+          alert(`API key error: ${errorText}\n\nPlease configure your API key in Settings.`);
+        }
+      }
+    }
+  }, [chat.messages]);
+
   // 3. Runtime creation
   const runtime = useAISDKRuntime(chat);
   const [cinematicIndex, setCinematicIndex] = useState(0);
@@ -318,6 +379,10 @@ export const Assistant = () => {
       setCinematicIndex((prev) => prev + 1);
     } catch (error) {
       console.error("Failed to send cinematic prompt:", error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes("API key") || errorMessage.includes("not configured")) {
+        alert(`API key error: ${errorMessage}\n\nPlease configure your API key in Settings.`);
+      }
     } finally {
       setIsSendingCinematic(false);
     }

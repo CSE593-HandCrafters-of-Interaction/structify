@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
-import { google } from "@ai-sdk/google";
 import { generateText } from "ai";
 import suggestInstruction from "@/data/suggest-instruction.json";
-
-const SUGGEST_MODEL = google("models/gemini-flash-latest");
+import { getModelInstance } from "@/lib/model-utils";
+import type { ModelProvider } from "@/lib/localStorage-settings-adapter";
 
 type BulletContent = {
   type: "bullet";
@@ -33,6 +32,9 @@ interface SuggestRequest {
   cards: SuggestCard[];
   focusCardId?: string;
   instruction?: string;
+  provider?: ModelProvider;
+  modelId?: string;
+  apiKey?: string;
 }
 
 export interface SuggestionPatch {
@@ -199,7 +201,31 @@ function parseSuggestions(raw: string): SuggestionPatch[] {
 
 export async function POST(req: Request) {
   try {
-    const { cards = [], focusCardId, instruction }: SuggestRequest = await req.json();
+    const { 
+      cards = [], 
+      focusCardId, 
+      instruction,
+      provider = "google",
+      modelId = "models/gemini-flash-latest",
+      apiKey,
+    }: SuggestRequest = await req.json();
+
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: "API key is required" },
+        { status: 400 }
+      );
+    }
+
+    let model;
+    try {
+      model = getModelInstance(provider, modelId, apiKey);
+    } catch (error) {
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : "Failed to create model" },
+        { status: 400 }
+      );
+    }
 
     if (!Array.isArray(cards) || cards.length === 0) {
       return NextResponse.json(
@@ -245,7 +271,7 @@ export async function POST(req: Request) {
     ].join("\n");
 
     const { text } = await generateText({
-      model: SUGGEST_MODEL,
+      model,
       prompt: `${instructionText}\n\n${focusIntro}`,
     });
 

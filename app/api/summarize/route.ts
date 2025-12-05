@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
-import { google } from "@ai-sdk/google";
 import { generateText } from "ai";
 import summarizeInstruction from "@/data/summarize-instruction.json";
-
-const SUMMARIZE_MODEL = google("models/gemini-flash-latest");
+import { getModelInstance } from "@/lib/model-utils";
+import type { ModelProvider } from "@/lib/localStorage-settings-adapter";
 
 type BulletContent = {
   type: "bullet";
@@ -26,6 +25,9 @@ interface SummarizeRequest {
   title?: string;
   content?: IncomingContent;
   instruction?: string;
+  provider?: ModelProvider;
+  modelId?: string;
+  apiKey?: string;
 }
 
 interface SummarizeResponse {
@@ -149,7 +151,31 @@ function normalizeModelOutput(json: any, fallback: BulletContent): CardContent {
 
 export async function POST(req: Request) {
   try {
-    const { title = "", content, instruction }: SummarizeRequest = await req.json();
+    const { 
+      title = "", 
+      content, 
+      instruction,
+      provider = "google",
+      modelId = "models/gemini-flash-latest",
+      apiKey,
+    }: SummarizeRequest = await req.json();
+
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: "API key is required" },
+        { status: 400 }
+      );
+    }
+
+    let model;
+    try {
+      model = getModelInstance(provider, modelId, apiKey);
+    } catch (error) {
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : "Failed to create model" },
+        { status: 400 }
+      );
+    }
 
     if (isSliderContent(content)) {
       const slider: SliderContent = {
@@ -189,7 +215,7 @@ export async function POST(req: Request) {
     ].join("\n");
 
     const { text } = await generateText({
-      model: SUMMARIZE_MODEL,
+      model,
       prompt,
     });
 

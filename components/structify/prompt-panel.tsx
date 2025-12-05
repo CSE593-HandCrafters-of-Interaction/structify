@@ -23,7 +23,7 @@ import { PROMPT_COLLECT_EVENT, type PromptCollectDetail } from "@/lib/prompt-col
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import type { PromptSet } from "@/lib/localStorage-prompts-adapter";
-import { loadPromptPrefix, loadFinalInstruction, loadSuggestInstruction } from "@/lib/localStorage-settings-adapter";
+import { loadPromptPrefix, loadFinalInstruction, loadSuggestInstruction, loadTaskModels, loadApiKeys } from "@/lib/localStorage-settings-adapter";
 import initialPrompts from "@/data/example.json";
 
 interface PromptPanelProps {
@@ -396,6 +396,11 @@ export function PromptPanel(props: PromptPanelProps) {
       setSuggestingCardId(focusId);
 
       try {
+        const taskModels = loadTaskModels();
+        const apiKeys = loadApiKeys();
+        const suggestModel = taskModels.suggest;
+        const apiKey = apiKeys[suggestModel.provider];
+
         const response = await fetch("/api/suggest", {
           method: "POST",
           headers: {
@@ -410,6 +415,9 @@ export function PromptPanel(props: PromptPanelProps) {
             })),
             focusCardId: focusId,
             instruction: loadSuggestInstruction(),
+            provider: suggestModel.provider,
+            modelId: suggestModel.modelId,
+            apiKey,
           }),
         });
 

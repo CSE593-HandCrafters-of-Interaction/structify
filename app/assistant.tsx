@@ -3,6 +3,7 @@
 import { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import { AssistantRuntimeProvider } from "@assistant-ui/react";
 import { useChat } from "@ai-sdk/react";
+import { loadTaskModels, loadApiKeys } from "@/lib/localStorage-settings-adapter";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import { useAISDKRuntime } from "@assistant-ui/react-ai-sdk";
 import cinematicScript from "@/data/cinematic.json";
@@ -43,9 +44,28 @@ export const Assistant = () => {
     () =>
       new DefaultChatTransport<AssistantThreadMessage>({
         api: "/api/chat",
-        body: () => ({
-          userStudyMode: userStudyModeRef.current,
-        }),
+        body: () => {
+          if (typeof window === "undefined") {
+            return {
+              userStudyMode: userStudyModeRef.current,
+              provider: "google" as const,
+              modelId: "gemini-2.5-pro",
+              apiKey: "",
+            };
+          }
+          
+          const taskModels = loadTaskModels();
+          const apiKeys = loadApiKeys();
+          const chatModel = taskModels.chat;
+          const apiKey = apiKeys[chatModel.provider];
+          
+          return {
+            userStudyMode: userStudyModeRef.current,
+            provider: chatModel.provider,
+            modelId: chatModel.modelId,
+            apiKey,
+          };
+        },
       }),
     [userStudyModeRef],
   );

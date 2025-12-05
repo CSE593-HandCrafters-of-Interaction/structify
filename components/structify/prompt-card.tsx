@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { PromptCardContent } from "./prompt-panel";
-import { loadSummarizeInstruction } from "@/lib/localStorage-settings-adapter";
+import { loadSummarizeInstruction, loadTaskModels, loadApiKeys } from "@/lib/localStorage-settings-adapter";
 
 export interface SummarySnapshot {
   previousTitle: string;
@@ -133,6 +133,11 @@ export function PromptCard({
 
     setIsSummarizing(true);
     try {
+      const taskModels = loadTaskModels();
+      const apiKeys = loadApiKeys();
+      const summarizeModel = taskModels.summarize;
+      const apiKey = apiKeys[summarizeModel.provider];
+
       const response = await fetch("/api/summarize", {
         method: "POST",
         headers: {
@@ -142,6 +147,9 @@ export function PromptCard({
           title: sourceTitle,
           content: sourceContent,
           instruction: loadSummarizeInstruction(),
+          provider: summarizeModel.provider,
+          modelId: summarizeModel.modelId,
+          apiKey,
         }),
       });
 

@@ -6,6 +6,7 @@ import {
   DialogContent,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { X, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -104,112 +105,120 @@ export function SettingsView({ open, onOpenChange }: SettingsViewProps) {
             </Button>
             <DialogTitle className="text-2xl font-semibold">Settings</DialogTitle>
           </div>
-          <div className="space-y-6">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label htmlFor="prompt-prefix" className="text-sm font-medium">
-                  Prompt Prefix
-                </label>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleResetPromptPrefix}
-                  className="gap-2"
-                >
-                  <RotateCcw className="size-3" />
-                  Reset
-                </Button>
+          <Tabs defaultValue="prompts" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="prompts">Prompts</TabsTrigger>
+              <TabsTrigger value="instructions">Instructions</TabsTrigger>
+            </TabsList>
+            <TabsContent value="prompts" className="space-y-6 mt-6">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label htmlFor="prompt-prefix" className="text-sm font-medium">
+                    Prompt Prefix
+                  </label>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleResetPromptPrefix}
+                    className="gap-2"
+                  >
+                    <RotateCcw className="size-3" />
+                    Reset
+                  </Button>
+                </div>
+                <Textarea
+                  id="prompt-prefix"
+                  value={promptPrefix}
+                  onChange={(e) => handlePromptPrefixChange(e.target.value)}
+                  placeholder="Enter the prefix text that will be added before structured prompts..."
+                  className="min-h-[200px] font-mono text-sm"
+                />
+                <p className="text-xs text-muted-foreground mt-2">
+                  This text will be prepended to all structured prompts when sending them to the assistant.
+                </p>
               </div>
-              <Textarea
-                id="prompt-prefix"
-                value={promptPrefix}
-                onChange={(e) => handlePromptPrefixChange(e.target.value)}
-                placeholder="Enter the prefix text that will be added before structured prompts..."
-                className="min-h-[200px] font-mono text-sm"
-              />
-              <p className="text-xs text-muted-foreground mt-2">
-                This text will be prepended to all structured prompts when sending them to the assistant.
-              </p>
-            </div>
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label htmlFor="final-instruction" className="text-sm font-medium">
-                  Final Instruction
-                </label>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleResetFinalInstruction}
-                  className="gap-2"
-                >
-                  <RotateCcw className="size-3" />
-                  Reset
-                </Button>
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label htmlFor="final-instruction" className="text-sm font-medium">
+                    Final Instruction
+                  </label>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleResetFinalInstruction}
+                    className="gap-2"
+                  >
+                    <RotateCcw className="size-3" />
+                    Reset
+                  </Button>
+                </div>
+                <Textarea
+                  id="final-instruction"
+                  value={finalInstruction}
+                  onChange={(e) => handleFinalInstructionChange(e.target.value)}
+                  placeholder="Enter the final instruction text..."
+                  className="min-h-[100px] font-mono text-sm"
+                />
+                <p className="text-xs text-muted-foreground mt-2">
+                  This text will be appended after all structured prompts with the &quot;[FINAL INSTRUCTION]&quot; header.
+                </p>
               </div>
-              <Textarea
-                id="final-instruction"
-                value={finalInstruction}
-                onChange={(e) => handleFinalInstructionChange(e.target.value)}
-                placeholder="Enter the final instruction text..."
-                className="min-h-[100px] font-mono text-sm"
-              />
-              <p className="text-xs text-muted-foreground mt-2">
-                This text will be appended after all structured prompts with the &quot;[FINAL INSTRUCTION]&quot; header.
-              </p>
-            </div>
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label htmlFor="suggest-instruction" className="text-sm font-medium">
-                  Suggest Instruction
-                </label>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleResetSuggestInstruction}
-                  className="gap-2"
-                >
-                  <RotateCcw className="size-3" />
-                  Reset
-                </Button>
+            </TabsContent>
+            <TabsContent value="instructions" className="space-y-6 mt-6">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label htmlFor="summarize-instruction" className="text-sm font-medium">
+                    Summarize Instruction
+                  </label>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleResetSummarizeInstruction}
+                    className="gap-2"
+                  >
+                    <RotateCcw className="size-3" />
+                    Reset
+                  </Button>
+                </div>
+                <Textarea
+                  id="summarize-instruction"
+                  value={summarizeInstruction}
+                  onChange={(e) => handleSummarizeInstructionChange(e.target.value)}
+                  placeholder="Enter the instruction text for the summarize feature..."
+                  className="min-h-[300px] font-mono text-sm"
+                />
+                <p className="text-xs text-muted-foreground mt-2">
+                  This instruction is sent to the AI when summarizing prompt cards.
+                </p>
               </div>
-              <Textarea
-                id="suggest-instruction"
-                value={suggestInstruction}
-                onChange={(e) => handleSuggestInstructionChange(e.target.value)}
-                placeholder="Enter the instruction text for the suggest feature..."
-                className="min-h-[300px] font-mono text-sm"
-              />
-              <p className="text-xs text-muted-foreground mt-2">
-                This instruction is sent to the AI when generating suggestions for prompt cards.
-              </p>
-            </div>
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label htmlFor="summarize-instruction" className="text-sm font-medium">
-                  Summarize Instruction
-                </label>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleResetSummarizeInstruction}
-                  className="gap-2"
-                >
-                  <RotateCcw className="size-3" />
-                  Reset
-                </Button>
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label htmlFor="suggest-instruction" className="text-sm font-medium">
+                    Suggest Instruction
+                  </label>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleResetSuggestInstruction}
+                    className="gap-2"
+                  >
+                    <RotateCcw className="size-3" />
+                    Reset
+                  </Button>
+                </div>
+                <Textarea
+                  id="suggest-instruction"
+                  value={suggestInstruction}
+                  onChange={(e) => handleSuggestInstructionChange(e.target.value)}
+                  placeholder="Enter the instruction text for the suggest feature..."
+                  className="min-h-[300px] font-mono text-sm"
+                />
+                <p className="text-xs text-muted-foreground mt-2">
+                  This instruction is sent to the AI when generating suggestions for prompt cards.
+                </p>
               </div>
-              <Textarea
-                id="summarize-instruction"
-                value={summarizeInstruction}
-                onChange={(e) => handleSummarizeInstructionChange(e.target.value)}
-                placeholder="Enter the instruction text for the summarize feature..."
-                className="min-h-[300px] font-mono text-sm"
-              />
-              <p className="text-xs text-muted-foreground mt-2">
-                This instruction is sent to the AI when summarizing prompt cards.
-              </p>
-            </div>
-          </div>
+            </TabsContent>
+          </Tabs>
         </div>
       </DialogContent>
     </Dialog>

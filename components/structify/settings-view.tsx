@@ -9,7 +9,7 @@ import {
 import { X, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { loadPromptPrefix, savePromptPrefix, DEFAULT_PROMPT_PREFIX, loadFinalInstruction, saveFinalInstruction, DEFAULT_FINAL_INSTRUCTION } from "@/lib/localStorage-settings-adapter";
+import { loadPromptPrefix, savePromptPrefix, DEFAULT_PROMPT_PREFIX, loadFinalInstruction, saveFinalInstruction, DEFAULT_FINAL_INSTRUCTION, loadSuggestInstruction, saveSuggestInstruction, DEFAULT_SUGGEST_INSTRUCTION } from "@/lib/localStorage-settings-adapter";
 
 type SettingsViewProps = {
   open: boolean;
@@ -19,11 +19,13 @@ type SettingsViewProps = {
 export function SettingsView({ open, onOpenChange }: SettingsViewProps) {
   const [promptPrefix, setPromptPrefix] = React.useState("");
   const [finalInstruction, setFinalInstruction] = React.useState("");
+  const [suggestInstruction, setSuggestInstruction] = React.useState("");
 
   React.useEffect(() => {
     if (open) {
       setPromptPrefix(loadPromptPrefix());
       setFinalInstruction(loadFinalInstruction());
+      setSuggestInstruction(loadSuggestInstruction());
     }
   }, [open]);
 
@@ -45,6 +47,16 @@ export function SettingsView({ open, onOpenChange }: SettingsViewProps) {
   const handleResetFinalInstruction = () => {
     setFinalInstruction(DEFAULT_FINAL_INSTRUCTION);
     saveFinalInstruction(DEFAULT_FINAL_INSTRUCTION);
+  };
+
+  const handleSuggestInstructionChange = (value: string) => {
+    setSuggestInstruction(value);
+    saveSuggestInstruction(value);
+  };
+
+  const handleResetSuggestInstruction = () => {
+    setSuggestInstruction(DEFAULT_SUGGEST_INSTRUCTION);
+    saveSuggestInstruction(DEFAULT_SUGGEST_INSTRUCTION);
   };
 
   return (
@@ -118,6 +130,32 @@ export function SettingsView({ open, onOpenChange }: SettingsViewProps) {
               />
               <p className="text-xs text-muted-foreground mt-2">
                 This text will be appended after all structured prompts with the &quot;[FINAL INSTRUCTION]&quot; header.
+              </p>
+            </div>
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label htmlFor="suggest-instruction" className="text-sm font-medium">
+                  Suggest Instruction
+                </label>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleResetSuggestInstruction}
+                  className="gap-2"
+                >
+                  <RotateCcw className="size-3" />
+                  Reset
+                </Button>
+              </div>
+              <Textarea
+                id="suggest-instruction"
+                value={suggestInstruction}
+                onChange={(e) => handleSuggestInstructionChange(e.target.value)}
+                placeholder="Enter the instruction text for the suggest feature..."
+                className="min-h-[300px] font-mono text-sm"
+              />
+              <p className="text-xs text-muted-foreground mt-2">
+                This instruction is sent to the AI when generating suggestions for prompt cards.
               </p>
             </div>
           </div>

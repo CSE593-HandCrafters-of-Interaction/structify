@@ -31,6 +31,7 @@ interface SuggestCard {
 interface SuggestRequest {
   cards: SuggestCard[];
   focusCardId?: string;
+  instruction?: string;
 }
 
 export interface SuggestionPatch {
@@ -197,7 +198,7 @@ function parseSuggestions(raw: string): SuggestionPatch[] {
 
 export async function POST(req: Request) {
   try {
-    const { cards = [], focusCardId }: SuggestRequest = await req.json();
+    const { cards = [], focusCardId, instruction }: SuggestRequest = await req.json();
 
     if (!Array.isArray(cards) || cards.length === 0) {
       return NextResponse.json(
@@ -229,7 +230,7 @@ export async function POST(req: Request) {
       })
       .join("\n\n---\n\n");
 
-    const instruction = [
+    const instructionText = instruction || [
       "You are helping a user design structured prompt cards for an LLM.",
       "Each card has a title and content. Content is one of two types:",
       '- BULLET: { "type": "bullet", "items": ["item 1", "item 2", ...] }',
@@ -299,7 +300,7 @@ export async function POST(req: Request) {
 
     const { text } = await generateText({
       model: SUGGEST_MODEL,
-      prompt: `${instruction}\n\n${focusIntro}`,
+      prompt: `${instructionText}\n\n${focusIntro}`,
     });
 
     const raw = (text || "").trim();

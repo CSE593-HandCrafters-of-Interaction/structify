@@ -23,7 +23,7 @@ import { PROMPT_COLLECT_EVENT, type PromptCollectDetail } from "@/lib/prompt-col
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import type { PromptSet } from "@/lib/localStorage-prompts-adapter";
-import { loadPromptPrefix, loadFinalInstruction } from "@/lib/localStorage-settings-adapter";
+import { loadPromptPrefix, loadFinalInstruction, loadSuggestInstruction } from "@/lib/localStorage-settings-adapter";
 import initialPrompts from "@/data/initial.json";
 
 interface PromptPanelProps {
@@ -409,6 +409,7 @@ export function PromptPanel(props: PromptPanelProps) {
               isIncluded: p.isIncluded,
             })),
             focusCardId: focusId,
+            instruction: loadSuggestInstruction(),
           }),
         });
 

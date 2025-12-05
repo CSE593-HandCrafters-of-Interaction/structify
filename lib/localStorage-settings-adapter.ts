@@ -120,3 +120,97 @@ export const saveSummarizeInstruction = (instruction: string): void => {
   }
 };
 
+// Model settings
+export type ModelProvider = "google" | "openai" | "anthropic";
+
+export type ModelConfig = {
+  provider: ModelProvider;
+  apiKey: string;
+};
+
+export type TaskModel = "chat" | "summarize" | "suggest";
+
+const API_KEYS_KEY = "structify-api-keys";
+const TASK_MODELS_KEY = "structify-task-models";
+
+export const DEFAULT_API_KEYS: Record<ModelProvider, string> = {
+  google: "",
+  openai: "",
+  anthropic: "",
+};
+
+export const DEFAULT_TASK_MODELS: Record<TaskModel, { provider: ModelProvider; modelId: string }> = {
+  chat: { provider: "google", modelId: "gemini-2.5-pro" },
+  summarize: { provider: "google", modelId: "models/gemini-flash-latest" },
+  suggest: { provider: "google", modelId: "models/gemini-flash-latest" },
+};
+
+export const loadApiKeys = (): Record<ModelProvider, string> => {
+  if (typeof window === "undefined") {
+    return DEFAULT_API_KEYS;
+  }
+
+  try {
+    const stored = localStorage.getItem(API_KEYS_KEY);
+    if (!stored) {
+      return DEFAULT_API_KEYS;
+    }
+    const parsed = JSON.parse(stored);
+    return { ...DEFAULT_API_KEYS, ...parsed };
+  } catch (error) {
+    console.error("Failed to load API keys from localStorage:", error);
+    return DEFAULT_API_KEYS;
+  }
+};
+
+export const saveApiKey = (provider: ModelProvider, apiKey: string): void => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    const current = loadApiKeys();
+    const updated = { ...current, [provider]: apiKey };
+    localStorage.setItem(API_KEYS_KEY, JSON.stringify(updated));
+  } catch (error) {
+    console.error("Failed to save API key to localStorage:", error);
+  }
+};
+
+export const loadTaskModels = (): Record<TaskModel, { provider: ModelProvider; modelId: string }> => {
+  if (typeof window === "undefined") {
+    return DEFAULT_TASK_MODELS;
+  }
+
+  try {
+    const stored = localStorage.getItem(TASK_MODELS_KEY);
+    if (!stored) {
+      return DEFAULT_TASK_MODELS;
+    }
+    const parsed = JSON.parse(stored);
+    return { ...DEFAULT_TASK_MODELS, ...parsed };
+  } catch (error) {
+    console.error("Failed to load task models from localStorage:", error);
+    return DEFAULT_TASK_MODELS;
+  }
+};
+
+export const saveTaskModel = (task: TaskModel, provider: ModelProvider, modelId: string): void => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    const current = loadTaskModels();
+    const updated = { ...current, [task]: { provider, modelId } };
+    localStorage.setItem(TASK_MODELS_KEY, JSON.stringify(updated));
+  } catch (error) {
+    console.error("Failed to save task model to localStorage:", error);
+  }
+};
+
+export const hasApiKey = (provider: ModelProvider): boolean => {
+  const apiKeys = loadApiKeys();
+  return !!apiKeys[provider] && apiKeys[provider].trim().length > 0;
+};
+

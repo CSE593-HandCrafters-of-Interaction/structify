@@ -568,12 +568,6 @@ export function PromptCard({
                 ref={textareaRef}
                 value={editContent}
                 onChange={(e) => setEditContent(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleDone();
-                  }
-                }}
                 rows={1}
                 className="text-sm resize-none overflow-hidden min-h-0"
               />

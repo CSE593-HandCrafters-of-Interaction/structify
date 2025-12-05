@@ -1,0 +1,16 @@
+{
+  "lines": [
+    "You will now receive a unified set of structured instructions.",
+    "They are organized into titled sections. Each section contains",
+    "bullet points that define requirements, constraints, or examples.",
+    "",
+    "Interpret every section as part of one cohesive prompt.",
+    "Titles are for organization only — not separate tasks.",
+    "Respect the user's language preferences and respond in the same language.",
+    "",
+    "After reading all sections, follow the FINAL INSTRUCTION section.",
+    "Do not repeat or restate the instructions unless explicitly asked.",
+    ""
+  ]
+}
+

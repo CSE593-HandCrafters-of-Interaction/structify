@@ -41,5 +41,5 @@ Then open `http://localhost:3000` in your browser.
 
 ## Features
 
-- Structrued Prompts Panel: a preset lives in `data/initial.json` and is loaded into the panel on startup.
+- Structrued Prompts Panel: a preset lives in `data/example.json` and is loaded into the panel on startup.
 - Cinematic: a few predefined round of conversations live in `data/cinematic.json` and can be triggered by the user.

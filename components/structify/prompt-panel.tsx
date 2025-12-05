@@ -24,7 +24,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import type { PromptSet } from "@/lib/localStorage-prompts-adapter";
 import { loadPromptPrefix, loadFinalInstruction, loadSuggestInstruction } from "@/lib/localStorage-settings-adapter";
-import initialPrompts from "@/data/initial.json";
+import initialPrompts from "@/data/example.json";
 
 interface PromptPanelProps {
   onWidthChange?: (width: number) => void;

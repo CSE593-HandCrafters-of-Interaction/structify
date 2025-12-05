@@ -1,6 +1,6 @@
 import { google } from "@ai-sdk/google";
 import { streamText, UIMessage, convertToModelMessages } from "ai";
-import chatPrompt from "@/data/chatPrompt.json";
+import chatPrompt from "@/data/user-study-system-prompt.json";
 
 const CHAT_MODEL = google("gemini-2.5-pro");
 const systemPrompt = chatPrompt.lines.join("\n");

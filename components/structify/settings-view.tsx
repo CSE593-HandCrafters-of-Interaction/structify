@@ -157,12 +157,114 @@ export function SettingsView({ open, onOpenChange }: SettingsViewProps) {
             </Button>
             <DialogTitle className="text-2xl font-semibold">Settings</DialogTitle>
           </div>
-          <Tabs defaultValue="prompts" className="w-full">
+          <Tabs defaultValue="models" className="w-full">
             <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="models">Models</TabsTrigger>
               <TabsTrigger value="prompts">Prompts</TabsTrigger>
               <TabsTrigger value="instructions">Instructions</TabsTrigger>
-              <TabsTrigger value="models">Models</TabsTrigger>
             </TabsList>
+            <TabsContent value="models" className="space-y-6 mt-6">
+              {/* API Key Management */}
+              <div>
+                <label htmlFor="model-provider" className="text-sm font-medium mb-2 block">
+                  Model Provider & API Key
+                </label>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="provider-select" className="text-xs text-muted-foreground mb-1 block">
+                      Select Provider
+                    </label>
+                    <select
+                      id="provider-select"
+                      value={selectedProvider}
+                      onChange={(e) => setSelectedProvider(e.target.value as ModelProvider)}
+                      className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                    >
+                      <option value="google">Google (Gemini)</option>
+                      <option value="openai">OpenAI</option>
+                      <option value="anthropic">Anthropic (Claude)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="api-key-input" className="text-xs text-muted-foreground mb-1 block">
+                      API Key
+                    </label>
+                    <Input
+                      id="api-key-input"
+                      type="password"
+                      value={apiKeys[selectedProvider]}
+                      onChange={(e) => handleApiKeyChange(selectedProvider, e.target.value)}
+                      placeholder={`Enter ${selectedProvider} API key...`}
+                      className="font-mono text-sm"
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Your API key is stored locally in your browser.
+                </p>
+              </div>
+
+              {/* Task Model Selection */}
+              <div>
+                <label className="text-sm font-medium mb-2 block">
+                  Task Model Selection
+                </label>
+                <p className="text-xs text-muted-foreground mb-4">
+                  Select models for each task. The selected model must have an API key configured above.
+                </p>
+                <div className="space-y-4">
+                  {(["chat", "summarize", "suggest"] as TaskModel[]).map((task) => {
+                    const taskModel = taskModels[task];
+                    const hasKey = hasApiKey(taskModel.provider);
+                    return (
+                      <div key={task} className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <label className="text-xs font-medium capitalize">
+                            {task} Model
+                          </label>
+                          {hasKey ? (
+                            <CheckCircle2 className="size-4 text-green-500" />
+                          ) : (
+                            <XCircle className="size-4 text-red-500" />
+                          )}
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <select
+                            value={taskModel.provider}
+                            onChange={(e) => {
+                              const newProvider = e.target.value as ModelProvider;
+                              const modelOptions = getModelOptions(newProvider);
+                              handleTaskModelChange(task, newProvider, modelOptions[0] || "");
+                            }}
+                            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                          >
+                            <option value="google">Google</option>
+                            <option value="openai">OpenAI</option>
+                            <option value="anthropic">Anthropic</option>
+                          </select>
+                          <select
+                            value={taskModel.modelId}
+                            onChange={(e) => handleTaskModelChange(task, taskModel.provider, e.target.value)}
+                            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                          >
+                            {getModelOptions(taskModel.provider).map((model) => (
+                              <option key={model} value={model}>
+                                {model}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        {!hasKey && (
+                          <p className="text-xs text-red-500">
+                            API key for {taskModel.provider} is not configured.
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </TabsContent>
             <TabsContent value="prompts" className="space-y-6 mt-6">
               <div>
                 <div className="flex items-center justify-between mb-2">
@@ -269,108 +371,6 @@ export function SettingsView({ open, onOpenChange }: SettingsViewProps) {
                 <p className="text-xs text-muted-foreground mt-2">
                   This instruction is sent to the AI when generating suggestions for prompt cards.
                 </p>
-              </div>
-            </TabsContent>
-            <TabsContent value="models" className="space-y-6 mt-6">
-              {/* API Key Management */}
-              <div>
-                <label htmlFor="model-provider" className="text-sm font-medium mb-2 block">
-                  Model Provider & API Key
-                </label>
-                <div className="space-y-4">
-                  <div>
-                    <label htmlFor="provider-select" className="text-xs text-muted-foreground mb-1 block">
-                      Select Provider
-                    </label>
-                    <select
-                      id="provider-select"
-                      value={selectedProvider}
-                      onChange={(e) => setSelectedProvider(e.target.value as ModelProvider)}
-                      className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                    >
-                      <option value="google">Google (Gemini)</option>
-                      <option value="openai">OpenAI</option>
-                      <option value="anthropic">Anthropic (Claude)</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label htmlFor="api-key-input" className="text-xs text-muted-foreground mb-1 block">
-                      API Key
-                    </label>
-                    <Input
-                      id="api-key-input"
-                      type="password"
-                      value={apiKeys[selectedProvider]}
-                      onChange={(e) => handleApiKeyChange(selectedProvider, e.target.value)}
-                      placeholder={`Enter ${selectedProvider} API key...`}
-                      className="font-mono text-sm"
-                    />
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Your API key is stored locally in your browser.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Task Model Selection */}
-              <div>
-                <label className="text-sm font-medium mb-2 block">
-                  Task Model Selection
-                </label>
-                <p className="text-xs text-muted-foreground mb-4">
-                  Select models for each task. The selected model must have an API key configured above.
-                </p>
-                <div className="space-y-4">
-                  {(["chat", "summarize", "suggest"] as TaskModel[]).map((task) => {
-                    const taskModel = taskModels[task];
-                    const hasKey = hasApiKey(taskModel.provider);
-                    return (
-                      <div key={task} className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <label className="text-xs font-medium capitalize">
-                            {task} Model
-                          </label>
-                          {hasKey ? (
-                            <CheckCircle2 className="size-4 text-green-500" />
-                          ) : (
-                            <XCircle className="size-4 text-red-500" />
-                          )}
-                        </div>
-                        <div className="grid grid-cols-2 gap-2">
-                          <select
-                            value={taskModel.provider}
-                            onChange={(e) => {
-                              const newProvider = e.target.value as ModelProvider;
-                              const modelOptions = getModelOptions(newProvider);
-                              handleTaskModelChange(task, newProvider, modelOptions[0] || "");
-                            }}
-                            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                          >
-                            <option value="google">Google</option>
-                            <option value="openai">OpenAI</option>
-                            <option value="anthropic">Anthropic</option>
-                          </select>
-                          <select
-                            value={taskModel.modelId}
-                            onChange={(e) => handleTaskModelChange(task, taskModel.provider, e.target.value)}
-                            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                          >
-                            {getModelOptions(taskModel.provider).map((model) => (
-                              <option key={model} value={model}>
-                                {model}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        {!hasKey && (
-                          <p className="text-xs text-red-500">
-                            API key for {taskModel.provider} is not configured.
-                          </p>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
               </div>
             </TabsContent>
           </Tabs>

@@ -2,22 +2,9 @@
 
 Structify is a structured prompt app built on [`assistant-ui`](https://github.com/Yonom/assistant-ui) and the Vercel AI SDK. A course project for CSE593.
 
-## Environment Setup (conda + Node)
-
-If you don't already have node.js globally and want to use conda to manage your environments, follow the instructions below.
-
-1. Pick and activate a conda environment (check the name first):
-
-conda env list
-conda activate <your-env-name>
-
-2. Install Node.js (with npm) inside that environment:
-
-conda install -c conda-forge nodejs
+## Local Development
 
 > Requires Node.js ≥ 18.
-
-## Local Development
 
 1. Change into the project directory and install dependencies (first run only).
 
@@ -31,7 +18,7 @@ npm install
 GOOGLE_GENERATIVE_AI_API_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
-1. Start the dev server.
+3. Start the dev server.
 
 ```console
 npm run dev
@@ -39,7 +26,20 @@ npm run dev
 
 Then open `http://localhost:3000` in your browser.
 
+4. To start in production, run
+
+```console
+npm run start
+```
+
 ## Features
 
-- Structrued Prompts Panel: a preset lives in `data/example.json` and is loaded into the panel on startup.
-- Cinematic: a few predefined round of conversations live in `data/cinematic.json` and can be triggered by the user.
+The `data/` folder contains configuration and instruction files used throughout the application:
+
+- `prompt-prefix.json`: Prefix text prepended to structured prompts when generating final prompts.
+- `final-instruction.json`: Final instruction text appended to structured prompts.
+- `suggest-instruction.json`: Instruction text used by the suggest API endpoint for improving prompt cards.
+- `summarize-instruction.json`: Instruction text used by the summarize API endpoint for refining prompt cards.
+- `example.json`: Example preset prompts loaded into the structured prompts panel when required to.
+- `cinematic.json`: Predefined conversation rounds that can be triggered by the user.
+- `user-study-system-prompt.json`: System prompt used in chat mode for the HCI user study.

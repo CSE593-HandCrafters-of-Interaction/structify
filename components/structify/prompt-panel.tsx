@@ -423,6 +423,18 @@ export function PromptPanel(props: PromptPanelProps) {
 
         if (!response.ok) {
           console.error("Suggest request failed with", response.status);
+          try {
+            const errorData = await response.json();
+            const errorMessage = errorData?.error || "Failed to get suggestions";
+            
+            if (errorMessage.includes("API key") || errorMessage.includes("not configured")) {
+              alert(`API key error: ${errorMessage}\n\nPlease configure your API key in Settings.`);
+            } else {
+              alert(`Error: ${errorMessage}`);
+            }
+          } catch {
+            alert(`Failed to get suggestions (status: ${response.status}). Please check your API key in Settings.`);
+          }
           return;
         }
 

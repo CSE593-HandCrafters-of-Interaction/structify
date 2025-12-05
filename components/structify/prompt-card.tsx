@@ -154,7 +154,19 @@ export function PromptCard({
       });
 
       if (!response.ok) {
-        throw new Error(`Summarize request failed with ${response.status}`);
+        try {
+          const errorData = await response.json();
+          const errorMessage = errorData?.error || `Summarize request failed with ${response.status}`;
+          
+          if (errorMessage.includes("API key") || errorMessage.includes("not configured")) {
+            alert(`API key error: ${errorMessage}\n\nPlease configure your API key in Settings.`);
+          } else {
+            alert(`Error: ${errorMessage}`);
+          }
+        } catch {
+          alert(`Failed to summarize content (status: ${response.status}). Please check your API key in Settings.`);
+        }
+        return;
       }
 
       const { summary } = (await response.json()) as { summary?: PromptCardContent };
@@ -173,6 +185,13 @@ export function PromptCard({
       });
     } catch (error) {
       console.error("Failed to summarize prompt card:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to summarize content";
+      if (errorMessage.includes("API key") || errorMessage.includes("not configured")) {
+        alert(`API key error: ${errorMessage}\n\nPlease configure your API key in Settings.`);
+      } else if (!errorMessage.includes("status:")) {
+        // Only show alert if it's not already shown in the response.ok check
+        alert(`Error: ${errorMessage}`);
+      }
     } finally {
       setIsSummarizing(false);
     }

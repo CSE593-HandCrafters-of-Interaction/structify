@@ -41,6 +41,7 @@ interface PromptCardProps {
   onDragLeave?: () => void;
   onDrop?: (e: React.DragEvent) => void;
   onDragEnd?: () => void;
+  panelWidth?: number;
 }
 
 export function PromptCard({
@@ -66,6 +67,7 @@ export function PromptCard({
   onDragLeave,
   onDrop,
   onDragEnd,
+  panelWidth,
 }: PromptCardProps) {
   const [editTitle, setEditTitle] = useState(title);
   const [editContent, setEditContent] = useState(
@@ -113,7 +115,7 @@ export function PromptCard({
     textarea.style.height = "auto";
     textarea.style.height = `${textarea.scrollHeight}px`;
     textarea.style.overflowY = "hidden";
-  }, [editContent, isEditing]);
+  }, [editContent, isEditing, panelWidth]);
 
   const normalizeContent = (text: string) =>
     text

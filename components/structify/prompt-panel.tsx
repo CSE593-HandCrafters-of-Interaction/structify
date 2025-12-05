@@ -890,6 +890,7 @@ ${loadFinalInstruction()}`;
                       onDragLeave={handleDragLeave}
                       onDrop={(e) => handleDrop(e, prompt.id)}
                       onDragEnd={handleDragEnd}
+                      panelWidth={panelWidth}
                     />
                   ))}
                 </div>

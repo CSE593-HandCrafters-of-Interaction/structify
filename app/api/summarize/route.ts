@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { google } from "@ai-sdk/google";
 import { generateText } from "ai";
+import summarizeInstruction from "@/data/summarize-instruction.json";
 
 const SUMMARIZE_MODEL = google("models/gemini-flash-latest");
 
@@ -177,34 +178,7 @@ export async function POST(req: Request) {
 
     const bulletText = bulletItems.map((i) => `- ${i}`).join("\n");
 
-    const instructionText = instruction || [
-      "You are helping the user refine a single structured prompt card.",
-      "The card has a title and a list of bullet items.",
-      "",
-      "You must choose the best representation for the card:",
-      '- BULLET card: { "type": "bullet", "items": ["...", "..."] }',
-      "- Use this when the card expresses constraints, tone, style, audience, examples, etc.",
-      "",
-      '- SLIDER card: { "type": "slider", "value": 200, "min": 100, "max": 300, "step": 10 }',
-      "- Use this when the card mainly defines a numeric quantity or range,",
-      '  such as length (e.g. "200 words", "150-250 characters"),',
-      '  number of items (e.g. "5-7 bullets"),',
-      "  or other numeric thresholds.",
-      "",
-      "For example:",
-      '- Title: "Length", bullets: ["~200 words"] -> choose SLIDER with an appropriate range,',
-      "  for example value around 200, a reasonable min and max, and a simple positive step.",
-      "",
-      "Output requirements:",
-      "- Always output a single valid JSON object with exactly one of these shapes:",
-      '  { "type": "bullet", "items": ["...", "..."] }',
-      '  { "type": "slider", "value": 200, "min": 100, "max": 300, "step": 10 }',
-      "- Use integers for slider numbers.",
-      "- For bullet items, keep 1–10 short, clear bullets.",
-      "- Keep the user's language (Chinese or English) consistent with the original text.",
-      "- Do NOT wrap JSON in markdown code fences.",
-      "- Do NOT add any explanation outside the JSON.",
-    ].join(" ");
+    const instructionText = instruction || summarizeInstruction.lines.join("\n");
 
     const prompt = [
       instructionText,

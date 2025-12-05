@@ -2,6 +2,14 @@ import React, { type FC } from "react";
 import { FileTextIcon, Trash2Icon, Edit2Icon, CheckIcon, XIcon, CopyPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import type { PromptSet } from "@/lib/localStorage-prompts-adapter";
 import { loadPromptSets, deletePromptSet, savePromptSet } from "@/lib/localStorage-prompts-adapter";
 
@@ -115,6 +123,7 @@ const PromptListItem: FC<{
 }> = ({ promptSet, onSelect, onDelete, onDuplicate, onUpdate, currentPromptSetId, onClosePanelForEdit }) => {
   const [isEditing, setIsEditing] = React.useState(false);
   const [editedTitle, setEditedTitle] = React.useState(promptSet.title || "Untitled");
+  const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
@@ -166,6 +175,24 @@ const PromptListItem: FC<{
     } else if (e.key === "Escape") {
       handleCancel();
     }
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowDeleteConfirm(true);
+  };
+
+  const handleConfirmDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowDeleteConfirm(false);
+    onDelete(promptSet.id, e);
+  };
+
+  const handleCancelDelete = (e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+    }
+    setShowDeleteConfirm(false);
   };
 
   return (
@@ -233,7 +260,7 @@ const PromptListItem: FC<{
               <CopyPlus className="size-4" />
             </Button>
             <Button
-              onClick={(e) => onDelete(promptSet.id, e)}
+              onClick={handleDeleteClick}
               className="size-7 shrink-0 p-1 opacity-100 pointer-events-auto"
               variant="ghost"
               size="icon"
@@ -244,6 +271,24 @@ const PromptListItem: FC<{
           </div>
         </>
       )}
+      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Prompt Set</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete &quot;{promptSet.title || "Untitled"}&quot;? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="ghost" onClick={handleCancelDelete}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleConfirmDelete}>
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

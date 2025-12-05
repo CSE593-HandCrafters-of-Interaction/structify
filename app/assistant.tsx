@@ -13,7 +13,7 @@ import {
   SidebarInset,
   SidebarProvider,
 } from "@/components/ui/sidebar";
-import { ThreadListSidebar } from "@/components/structify/sidebar";
+import { StructifySidebar } from "@/components/structify/sidebar";
 import { PromptPanel } from "@/components/structify/prompt-panel";
 import { SettingsView } from "@/components/structify/settings-view";
 import { PANEL_SLIDE_DURATION_MS } from "@/components/ui/panel";
@@ -345,7 +345,7 @@ export const Assistant = () => {
       <CinematicProvider value={cinematicContextValue}>
         <SidebarProvider>
           <div className="flex h-dvh w-full pr-0.5">
-            <ThreadListSidebar
+            <StructifySidebar
               structifyFeature={structifyFeature}
               onToggleStructifyFeature={toggleStructifyFeature}
               userStudyMode={isUserStudyMode}

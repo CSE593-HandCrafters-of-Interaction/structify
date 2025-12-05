@@ -19,7 +19,7 @@ import type { PromptSet } from "@/lib/localStorage-prompts-adapter";
 import { savePromptSet } from "@/lib/localStorage-prompts-adapter";
 import type { PromptItem } from "@/components/structify/prompt-panel";
 
-type ThreadListSidebarProps = React.ComponentProps<typeof Sidebar> & {
+type StructifySidebarProps = React.ComponentProps<typeof Sidebar> & {
   structifyFeature: boolean;
   onToggleStructifyFeature: () => void;
   userStudyMode: boolean;
@@ -33,7 +33,7 @@ type ThreadListSidebarProps = React.ComponentProps<typeof Sidebar> & {
   onSettingsClick?: () => void;
 };
 
-export function ThreadListSidebar({
+export function StructifySidebar({
   structifyFeature,
   onToggleStructifyFeature,
   userStudyMode,
@@ -46,7 +46,7 @@ export function ThreadListSidebar({
   onOpenWelcomeView,
   onSettingsClick,
   ...props
-}: ThreadListSidebarProps) {
+}: StructifySidebarProps) {
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
 
   const handleCreateNew = React.useCallback(() => {

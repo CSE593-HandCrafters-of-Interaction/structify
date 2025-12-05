@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { loadPromptPrefix, savePromptPrefix, DEFAULT_PROMPT_PREFIX, loadFinalInstruction, saveFinalInstruction, DEFAULT_FINAL_INSTRUCTION, loadSuggestInstruction, saveSuggestInstruction, DEFAULT_SUGGEST_INSTRUCTION, loadSummarizeInstruction, saveSummarizeInstruction, DEFAULT_SUMMARIZE_INSTRUCTION, loadApiKeys, saveApiKey, loadTaskModels, saveTaskModel, hasApiKey, type ModelProvider, type TaskModel, DEFAULT_TASK_MODELS } from "@/lib/localStorage-settings-adapter";
 import { Input } from "@/components/ui/input";
 import { CheckCircle2, XCircle } from "lucide-react";
+import { SiGoogle, SiOpenai } from "react-icons/si";
 
 type SettingsViewProps = {
   open: boolean;
@@ -137,6 +138,28 @@ export function SettingsView({ open, onOpenChange }: SettingsViewProps) {
     }
   };
 
+  const isCustomModel = (provider: ModelProvider, modelId: string): boolean => {
+    return !getModelOptions(provider).includes(modelId);
+  };
+
+  const getProviderIcon = (provider: ModelProvider) => {
+    switch (provider) {
+      case "google":
+        return <SiGoogle className="size-4" />;
+      case "openai":
+        return <SiOpenai className="size-4" />;
+      case "anthropic":
+        // Anthropic icon not available in Simple Icons, using a simple fallback
+        return (
+          <div className="size-4 rounded bg-[#D4A574] flex items-center justify-center">
+            <span className="text-[10px] font-bold text-white">A</span>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -169,21 +192,26 @@ export function SettingsView({ open, onOpenChange }: SettingsViewProps) {
                 <label htmlFor="model-provider" className="text-sm font-medium mb-2 block">
                   Model Provider & API Key
                 </label>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
+                <div className="grid grid-cols-[auto_1fr] gap-4">
+                  <div className="w-32">
                     <label htmlFor="provider-select" className="text-xs text-muted-foreground mb-1 block">
-                      Select Provider
+                      Provider
                     </label>
-                    <select
-                      id="provider-select"
-                      value={selectedProvider}
-                      onChange={(e) => setSelectedProvider(e.target.value as ModelProvider)}
-                      className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                    >
-                      <option value="google">Google (Gemini)</option>
-                      <option value="openai">OpenAI</option>
-                      <option value="anthropic">Anthropic (Claude)</option>
-                    </select>
+                    <div className="relative">
+                      <select
+                        id="provider-select"
+                        value={selectedProvider}
+                        onChange={(e) => setSelectedProvider(e.target.value as ModelProvider)}
+                        className="flex h-9 w-full rounded-md border border-input bg-transparent pl-8 pr-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 appearance-none"
+                      >
+                        <option value="google">Google</option>
+                        <option value="openai">OpenAI</option>
+                        <option value="anthropic">Anthropic</option>
+                      </select>
+                      <div className="absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none">
+                        {getProviderIcon(selectedProvider)}
+                      </div>
+                    </div>
                   </div>
                   <div>
                     <label htmlFor="api-key-input" className="text-xs text-muted-foreground mb-1 block">
@@ -228,23 +256,34 @@ export function SettingsView({ open, onOpenChange }: SettingsViewProps) {
                             <XCircle className="size-4 text-red-500" />
                           )}
                         </div>
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-[auto_1fr] gap-2">
+                          <div className="relative w-32">
+                            <select
+                              value={taskModel.provider}
+                              onChange={(e) => {
+                                const newProvider = e.target.value as ModelProvider;
+                                const modelOptions = getModelOptions(newProvider);
+                                handleTaskModelChange(task, newProvider, modelOptions[0] || "");
+                              }}
+                              className="flex h-9 w-full rounded-md border border-input bg-transparent pl-8 pr-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 appearance-none"
+                            >
+                              <option value="google">Google</option>
+                              <option value="openai">OpenAI</option>
+                              <option value="anthropic">Anthropic</option>
+                            </select>
+                            <div className="absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none">
+                              {getProviderIcon(taskModel.provider)}
+                            </div>
+                          </div>
                           <select
-                            value={taskModel.provider}
+                            value={isCustomModel(taskModel.provider, taskModel.modelId) ? "__custom__" : taskModel.modelId}
                             onChange={(e) => {
-                              const newProvider = e.target.value as ModelProvider;
-                              const modelOptions = getModelOptions(newProvider);
-                              handleTaskModelChange(task, newProvider, modelOptions[0] || "");
+                              if (e.target.value === "__custom__") {
+                                handleTaskModelChange(task, taskModel.provider, "");
+                              } else {
+                                handleTaskModelChange(task, taskModel.provider, e.target.value);
+                              }
                             }}
-                            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                          >
-                            <option value="google">Google</option>
-                            <option value="openai">OpenAI</option>
-                            <option value="anthropic">Anthropic</option>
-                          </select>
-                          <select
-                            value={taskModel.modelId}
-                            onChange={(e) => handleTaskModelChange(task, taskModel.provider, e.target.value)}
                             className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
                           >
                             {getModelOptions(taskModel.provider).map((model) => (
@@ -252,8 +291,22 @@ export function SettingsView({ open, onOpenChange }: SettingsViewProps) {
                                 {model}
                               </option>
                             ))}
+                            <option value="__custom__">Custom...</option>
                           </select>
                         </div>
+                        {isCustomModel(taskModel.provider, taskModel.modelId) && (
+                          <div className="mt-2">
+                            <Input
+                              value={taskModel.modelId}
+                              onChange={(e) => handleTaskModelChange(task, taskModel.provider, e.target.value)}
+                              placeholder={`Enter custom model ID...`}
+                              className="font-mono text-sm"
+                            />
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Enter a custom model ID for {taskModel.provider}
+                            </p>
+                          </div>
+                        )}
                         {!hasKey && (
                           <p className="text-xs text-red-500">
                             API key for {taskModel.provider} is not configured.

@@ -1,6 +1,7 @@
 const PROMPT_PREFIX_KEY = "structify-prompt-prefix";
 const FINAL_INSTRUCTION_KEY = "structify-final-instruction";
 const SUGGEST_INSTRUCTION_KEY = "structify-suggest-instruction";
+const SUMMARIZE_INSTRUCTION_KEY = "structify-summarize-instruction";
 
 export const DEFAULT_PROMPT_PREFIX = `You will now receive a unified set of structured instructions.
 They are organized into titled sections. Each section contains
@@ -149,6 +150,61 @@ export const saveSuggestInstruction = (instruction: string): void => {
     localStorage.setItem(SUGGEST_INSTRUCTION_KEY, instruction);
   } catch (error) {
     console.error("Failed to save suggest instruction to localStorage:", error);
+  }
+};
+
+export const DEFAULT_SUMMARIZE_INSTRUCTION = [
+  "You are helping the user refine a single structured prompt card.",
+  "The card has a title and a list of bullet items.",
+  "",
+  "You must choose the best representation for the card:",
+  '- BULLET card: { "type": "bullet", "items": ["...", "..."] }',
+  "- Use this when the card expresses constraints, tone, style, audience, examples, etc.",
+  "",
+  '- SLIDER card: { "type": "slider", "value": 200, "min": 100, "max": 300, "step": 10 }',
+  "- Use this when the card mainly defines a numeric quantity or range,",
+  '  such as length (e.g. "200 words", "150-250 characters"),',
+  '  number of items (e.g. "5-7 bullets"),',
+  "  or other numeric thresholds.",
+  "",
+  "For example:",
+  '- Title: "Length", bullets: ["~200 words"] -> choose SLIDER with an appropriate range,',
+  "  for example value around 200, a reasonable min and max, and a simple positive step.",
+  "",
+  "Output requirements:",
+  "- Always output a single valid JSON object with exactly one of these shapes:",
+  '  { "type": "bullet", "items": ["...", "..."] }',
+  '  { "type": "slider", "value": 200, "min": 100, "max": 300, "step": 10 }',
+  "- Use integers for slider numbers.",
+  "- For bullet items, keep 1–10 short, clear bullets.",
+  "- Keep the user's language (Chinese or English) consistent with the original text.",
+  "- Do NOT wrap JSON in markdown code fences.",
+  "- Do NOT add any explanation outside the JSON.",
+].join(" ");
+
+export const loadSummarizeInstruction = (): string => {
+  if (typeof window === "undefined") {
+    return DEFAULT_SUMMARIZE_INSTRUCTION;
+  }
+
+  try {
+    const stored = localStorage.getItem(SUMMARIZE_INSTRUCTION_KEY);
+    return stored || DEFAULT_SUMMARIZE_INSTRUCTION;
+  } catch (error) {
+    console.error("Failed to load summarize instruction from localStorage:", error);
+    return DEFAULT_SUMMARIZE_INSTRUCTION;
+  }
+};
+
+export const saveSummarizeInstruction = (instruction: string): void => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    localStorage.setItem(SUMMARIZE_INSTRUCTION_KEY, instruction);
+  } catch (error) {
+    console.error("Failed to save summarize instruction to localStorage:", error);
   }
 };
 

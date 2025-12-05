@@ -9,7 +9,7 @@ import {
 import { X, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { loadPromptPrefix, savePromptPrefix, DEFAULT_PROMPT_PREFIX, loadFinalInstruction, saveFinalInstruction, DEFAULT_FINAL_INSTRUCTION, loadSuggestInstruction, saveSuggestInstruction, DEFAULT_SUGGEST_INSTRUCTION } from "@/lib/localStorage-settings-adapter";
+import { loadPromptPrefix, savePromptPrefix, DEFAULT_PROMPT_PREFIX, loadFinalInstruction, saveFinalInstruction, DEFAULT_FINAL_INSTRUCTION, loadSuggestInstruction, saveSuggestInstruction, DEFAULT_SUGGEST_INSTRUCTION, loadSummarizeInstruction, saveSummarizeInstruction, DEFAULT_SUMMARIZE_INSTRUCTION } from "@/lib/localStorage-settings-adapter";
 
 type SettingsViewProps = {
   open: boolean;
@@ -20,12 +20,14 @@ export function SettingsView({ open, onOpenChange }: SettingsViewProps) {
   const [promptPrefix, setPromptPrefix] = React.useState("");
   const [finalInstruction, setFinalInstruction] = React.useState("");
   const [suggestInstruction, setSuggestInstruction] = React.useState("");
+  const [summarizeInstruction, setSummarizeInstruction] = React.useState("");
 
   React.useEffect(() => {
     if (open) {
       setPromptPrefix(loadPromptPrefix());
       setFinalInstruction(loadFinalInstruction());
       setSuggestInstruction(loadSuggestInstruction());
+      setSummarizeInstruction(loadSummarizeInstruction());
     }
   }, [open]);
 
@@ -57,6 +59,16 @@ export function SettingsView({ open, onOpenChange }: SettingsViewProps) {
   const handleResetSuggestInstruction = () => {
     setSuggestInstruction(DEFAULT_SUGGEST_INSTRUCTION);
     saveSuggestInstruction(DEFAULT_SUGGEST_INSTRUCTION);
+  };
+
+  const handleSummarizeInstructionChange = (value: string) => {
+    setSummarizeInstruction(value);
+    saveSummarizeInstruction(value);
+  };
+
+  const handleResetSummarizeInstruction = () => {
+    setSummarizeInstruction(DEFAULT_SUMMARIZE_INSTRUCTION);
+    saveSummarizeInstruction(DEFAULT_SUMMARIZE_INSTRUCTION);
   };
 
   return (
@@ -156,6 +168,32 @@ export function SettingsView({ open, onOpenChange }: SettingsViewProps) {
               />
               <p className="text-xs text-muted-foreground mt-2">
                 This instruction is sent to the AI when generating suggestions for prompt cards.
+              </p>
+            </div>
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label htmlFor="summarize-instruction" className="text-sm font-medium">
+                  Summarize Instruction
+                </label>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleResetSummarizeInstruction}
+                  className="gap-2"
+                >
+                  <RotateCcw className="size-3" />
+                  Reset
+                </Button>
+              </div>
+              <Textarea
+                id="summarize-instruction"
+                value={summarizeInstruction}
+                onChange={(e) => handleSummarizeInstructionChange(e.target.value)}
+                placeholder="Enter the instruction text for the summarize feature..."
+                className="min-h-[300px] font-mono text-sm"
+              />
+              <p className="text-xs text-muted-foreground mt-2">
+                This instruction is sent to the AI when summarizing prompt cards.
               </p>
             </div>
           </div>

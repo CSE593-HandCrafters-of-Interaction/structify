@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { PromptCardContent } from "./prompt-panel";
+import { loadSummarizeInstruction } from "@/lib/localStorage-settings-adapter";
 
 export interface SummarySnapshot {
   previousTitle: string;
@@ -139,6 +140,7 @@ export function PromptCard({
         body: JSON.stringify({
           title: sourceTitle,
           content: sourceContent,
+          instruction: loadSummarizeInstruction(),
         }),
       });
 

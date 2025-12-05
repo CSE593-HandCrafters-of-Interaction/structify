@@ -24,6 +24,7 @@ type IncomingContent = string[] | CardContent | null | undefined;
 interface SummarizeRequest {
   title?: string;
   content?: IncomingContent;
+  instruction?: string;
 }
 
 interface SummarizeResponse {
@@ -147,7 +148,7 @@ function normalizeModelOutput(json: any, fallback: BulletContent): CardContent {
 
 export async function POST(req: Request) {
   try {
-    const { title = "", content }: SummarizeRequest = await req.json();
+    const { title = "", content, instruction }: SummarizeRequest = await req.json();
 
     if (isSliderContent(content)) {
       const slider: SliderContent = {
@@ -176,7 +177,7 @@ export async function POST(req: Request) {
 
     const bulletText = bulletItems.map((i) => `- ${i}`).join("\n");
 
-    const instruction = [
+    const instructionText = instruction || [
       "You are helping the user refine a single structured prompt card.",
       "The card has a title and a list of bullet items.",
       "",
@@ -206,7 +207,7 @@ export async function POST(req: Request) {
     ].join(" ");
 
     const prompt = [
-      instruction,
+      instructionText,
       "",
       `Title: ${title || "Untitled"}`,
       "Original bullets:",

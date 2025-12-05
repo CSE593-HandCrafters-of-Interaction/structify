@@ -84,7 +84,6 @@ export function PromptCard({
   );
   const [isSummarizing, setIsSummarizing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
-  const autoSaveReadyRef = useRef(false);
 
   useEffect(() => {
     if (content?.type === "slider" && !isEditing) {
@@ -267,28 +266,14 @@ export function PromptCard({
     onSummarySnapshotChange?.(id);
   }, [content, id, onSummarySnapshotChange, summarySnapshot]);
 
-  useEffect(() => {
-    if (!isEditing) {
-      autoSaveReadyRef.current = false;
-      return;
-    }
-
-    if (!autoSaveReadyRef.current) {
-      autoSaveReadyRef.current = true;
-      return;
-    }
-
+  const saveContent = () => {
+    // Save content
     if (content?.type === "bullet") {
-      const nextContent: PromptCardContent = {
-        type: "bullet",
-        items: editContent
-          .split("\n")
-          .map((line: string) => line.trim())
-          .filter(Boolean)
-      };
+      const lines = editContent.split("\n");
+      const items = lines.map((line: string) => line.trim()).filter(Boolean);
       onUpdate?.(id, {
         title: editTitle,
-        content: nextContent
+        content: { type: "bullet", items }
       });
     } else if (content?.type === "slider") {
       const numValue = parseFloat(editContent) || editSliderValue;
@@ -306,13 +291,11 @@ export function PromptCard({
         title: editTitle,
         content: nextContent
       });
-      // Don't update edit state here - let blur handlers handle validation
-      // This allows users to type freely without interruption
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editTitle, editContent, editSliderValue, editMin, editMax, id, isEditing, onUpdate]);
+  };
 
   const handleDone = () => {
+    saveContent();
     onEditingChange?.(false);
   };
 
@@ -401,6 +384,7 @@ export function PromptCard({
               value={editTitle}
               placeholder="Untitled"
               onChange={(e) => setEditTitle(e.target.value)}
+              onBlur={saveContent}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
@@ -568,6 +552,7 @@ export function PromptCard({
                 ref={textareaRef}
                 value={editContent}
                 onChange={(e) => setEditContent(e.target.value)}
+                onBlur={saveContent}
                 rows={1}
                 className="text-sm resize-none overflow-hidden min-h-0"
               />

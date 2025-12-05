@@ -121,7 +121,7 @@ export const saveSummarizeInstruction = (instruction: string): void => {
 };
 
 // Model settings
-export type ModelProvider = "google" | "openai" | "anthropic";
+export type ModelProvider = "google" | "openai" | "anthropic" | "mistral" | "cohere" | "xai" | "groq" | "deepseek";
 
 export type ModelConfig = {
   provider: ModelProvider;
@@ -137,6 +137,11 @@ export const DEFAULT_API_KEYS: Record<ModelProvider, string> = {
   google: "",
   openai: "",
   anthropic: "",
+  mistral: "",
+  cohere: "",
+  xai: "",
+  groq: "",
+  deepseek: "",
 };
 
 export const DEFAULT_TASK_MODELS: Record<TaskModel, { provider: ModelProvider; modelId: string }> = {

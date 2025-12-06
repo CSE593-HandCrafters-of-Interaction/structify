@@ -330,8 +330,8 @@ export function SettingsView({ open, onOpenChange }: SettingsViewProps) {
                             <XCircle className="size-4 text-red-500" />
                           )}
                         </div>
-                        <div className="grid grid-cols-[auto_1fr] gap-2">
-                          <div className="relative w-32">
+                        <div className="flex gap-2">
+                          <div className="relative w-32 shrink-0">
                             <select
                               value={taskModel.provider}
                               onChange={(e) => {
@@ -354,37 +354,43 @@ export function SettingsView({ open, onOpenChange }: SettingsViewProps) {
                               {getProviderIcon(taskModel.provider)}
                             </div>
                           </div>
-                          <select
-                            value={isCustomModel(taskModel.provider, taskModel.modelId) ? "__custom__" : taskModel.modelId}
-                            onChange={(e) => {
-                              if (e.target.value === "__custom__") {
-                                handleTaskModelChange(task, taskModel.provider, "");
-                              } else {
-                                handleTaskModelChange(task, taskModel.provider, e.target.value);
-                              }
-                            }}
-                            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                          >
-                            {getModelOptions(taskModel.provider).map((model) => (
-                              <option key={model} value={model}>
-                                {model}
-                              </option>
-                            ))}
-                            <option value="__custom__">Custom...</option>
-                          </select>
+                          <div className="flex gap-2 flex-1 min-w-0">
+                            <div className="min-w-0 flex-[1_1_33.333%]">
+                              <select
+                                value={isCustomModel(taskModel.provider, taskModel.modelId) ? "__custom__" : taskModel.modelId}
+                                onChange={(e) => {
+                                  if (e.target.value === "__custom__") {
+                                    handleTaskModelChange(task, taskModel.provider, "");
+                                  } else {
+                                    handleTaskModelChange(task, taskModel.provider, e.target.value);
+                                  }
+                                }}
+                                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                              >
+                                {getModelOptions(taskModel.provider).map((model) => (
+                                  <option key={model} value={model}>
+                                    {model}
+                                  </option>
+                                ))}
+                                <option value="__custom__">Custom...</option>
+                              </select>
+                            </div>
+                            <div className="min-w-0 flex-[2_1_66.666%]">
+                              {isCustomModel(taskModel.provider, taskModel.modelId) ? (
+                                <Input
+                                  value={taskModel.modelId}
+                                  onChange={(e) => handleTaskModelChange(task, taskModel.provider, e.target.value)}
+                                  placeholder={`Enter custom model ID...`}
+                                  className="font-mono text-sm h-9 w-full"
+                                />
+                              ) : null}
+                            </div>
+                          </div>
                         </div>
                         {isCustomModel(taskModel.provider, taskModel.modelId) && (
-                          <div className="mt-2">
-                            <Input
-                              value={taskModel.modelId}
-                              onChange={(e) => handleTaskModelChange(task, taskModel.provider, e.target.value)}
-                              placeholder={`Enter custom model ID...`}
-                              className="font-mono text-sm"
-                            />
-                            <p className="text-xs text-muted-foreground mt-1">
-                              Enter a custom model ID for {taskModel.provider}
-                            </p>
-                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            Enter a custom model ID for {taskModel.provider}
+                          </p>
                         )}
                         {!hasKey && (
                           <p className="text-xs text-red-500">

@@ -26,6 +26,7 @@ import type { PromptCardContent } from "@/components/structify/prompt-panel";
 
 type AssistantThreadMessage = UIMessage & {
   content: string;
+  error?: string | { message?: string } | unknown;
 };
 
 const cinematicPrompts = Array.isArray(cinematicScript)
@@ -147,9 +148,13 @@ export const Assistant = () => {
     const lastMessage = chat.messages[chat.messages.length - 1];
     if (lastMessage?.role === "assistant") {
       // Check if there's an error in the message
-      const messageError = (lastMessage as any)?.error;
+      const messageError = lastMessage.error;
       if (messageError) {
-        const errorText = typeof messageError === "string" ? messageError : messageError?.message || String(messageError);
+        const errorText = typeof messageError === "string" 
+          ? messageError 
+          : (typeof messageError === "object" && messageError !== null && "message" in messageError && typeof messageError.message === "string")
+            ? messageError.message
+            : String(messageError);
         if (errorText.includes("API key") || errorText.includes("not configured")) {
           alert(`API key error: ${errorText}\n\nPlease configure your API key in Settings.`);
         }
